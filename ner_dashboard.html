@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NER Validation Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar h1 {
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .test-case-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #334155;
+            border: none;
+            border-radius: 8px;
+            color: #e2e8f0;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .test-case-btn:hover {
+            background: #475569;
+        }
+
+        .test-case-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .test-case-btn .count {
+            float: right;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header h2 {
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        /* Summary cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .summary-card .label {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .value {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .summary-card .value.loc { color: #059669; }
+        .summary-card .value.org { color: #2563eb; }
+        .summary-card .value.per { color: #dc2626; }
+        .summary-card .value.misc { color: #7c3aed; }
+
+        /* Phrase cards */
+        .phrase-card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .phrase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .phrase-id {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .phrase-metrics {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+        }
+
+        .phrase-metrics span {
+            padding: 4px 10px;
+            background: #e2e8f0;
+            border-radius: 15px;
+        }
+
+        .phrase-text {
+            padding: 20px;
+            font-size: 1.05rem;
+            line-height: 2;
+            background: #fefefe;
+        }
+
+        /* Entity highlighting */
+        .entity {
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: help;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .entity-LOC {
+            background: #d1fae5;
+            border-bottom: 2px solid #059669;
+            color: #065f46;
+        }
+
+        .entity-ORG {
+            background: #dbeafe;
+            border-bottom: 2px solid #2563eb;
+            color: #1e40af;
+        }
+
+        .entity-PER {
+            background: #fee2e2;
+            border-bottom: 2px solid #dc2626;
+            color: #991b1b;
+        }
+
+        .entity-MISC {
+            background: #ede9fe;
+            border-bottom: 2px solid #7c3aed;
+            color: #5b21b6;
+        }
+
+        .entity-NA {
+            background: #f1f5f9;
+            border-bottom: 2px solid #94a3b8;
+            color: #475569;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 100;
+            margin-bottom: 5px;
+        }
+
+        .entity:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Entity list */
+        .entity-list {
+            padding: 15px 20px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .entity-list-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .entity-table {
+            width: 100%;
+            font-size: 0.85rem;
+            border-collapse: collapse;
+        }
+
+        .entity-table th {
+            text-align: left;
+            padding: 8px 10px;
+            background: #e2e8f0;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .entity-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .entity-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .score-bar {
+            width: 60px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .score-high { background: #22c55e; }
+        .score-medium { background: #f59e0b; }
+        .score-low { background: #ef4444; }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.loc { background: #d1fae5; border: 2px solid #059669; }
+        .legend-color.org { background: #dbeafe; border: 2px solid #2563eb; }
+        .legend-color.per { background: #fee2e2; border: 2px solid #dc2626; }
+        .legend-color.misc { background: #ede9fe; border: 2px solid #7c3aed; }
+
+        /* Filter */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #3b82f6;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        /* Confidence indicator */
+        .confidence-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .avg-score {
+            font-weight: 600;
+        }
+
+        .avg-score.high { color: #22c55e; }
+        .avg-score.medium { color: #f59e0b; }
+        .avg-score.low { color: #ef4444; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+        }
+
+        /* Overall stats panel */
+        .overall-stats {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .overall-stats h3 {
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .stat-item .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .stat-item .stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Search */
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        /* Collapsible */
+        .phrase-card.collapsed .phrase-text,
+        .phrase-card.collapsed .entity-list {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            color: #64748b;
+            font-size: 1.2rem;
+        }
+
+        .toggle-btn:hover {
+            color: #1e293b;
+        }
+
+        /* Export button */
+        .export-btn {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+
+        .export-btn:hover {
+            background: #047857;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h1>NER Validation</h1>
+            <div id="test-case-list"></div>
+            <div class="overall-stats" id="overall-stats"></div>
+        </aside>
+        <main class="main-content">
+            <div class="header">
+                <h2 id="current-test-case">Select a Test Case</h2>
+                <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color loc"></div>
+                    <span>LOC (Location)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color org"></div>
+                    <span>ORG (Organization)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color per"></div>
+                    <span>PER (Person)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color misc"></div>
+                    <span>MISC (Miscellaneous)</span>
+                </div>
+            </div>
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Search phrases or entities..." oninput="handleSearch(this.value)">
+            </div>
+            <div id="summary-cards" class="summary-cards"></div>
+            <div class="filter-bar" id="filter-bar"></div>
+            <div id="phrases-container"></div>
+        </main>
+    </div>
+
+    <script>
+        // Embedded NER data
+        const jsonData = `{"Test_Case":"label_confusion","Phrase_ID":1,"Phrase":"On Rembrandtplein, at number 19, this mid-sized property offers 40 rooms above a row of caf\\u00e9s and bars; Rembrandtplein Hotel is often mistaken for the square itself in ride-hailing apps.","Entity_Group":"LOC","Word":"Rembrandtplein","Score":"0.9995","Start":3,"End":17}
+{"Test_Case":"label_confusion","Phrase_ID":1,"Phrase":"On Rembrandtplein, at number 19, this mid-sized property offers 40 rooms above a row of caf\\u00e9s and bars; Rembrandtplein Hotel is often mistaken for the square itself in ride-hailing apps.","Entity_Group":"ORG","Word":"Rem","Score":"0.5049","Start":104,"End":107}
+{"Test_Case":"label_confusion","Phrase_ID":1,"Phrase":"On Rembrandtplein, at number 19, this mid-sized property offers 40 rooms above a row of caf\\u00e9s and bars; Rembrandtplein Hotel is often mistaken for the square itself in ride-hailing apps.","Entity_Group":"LOC","Word":"brandtplein","Score":"0.6878","Start":107,"End":118}
+{"Test_Case":"label_confusion","Phrase_ID":1,"Phrase":"On Rembrandtplein, at number 19, this mid-sized property offers 40 rooms above a row of caf\\u00e9s and bars; Rembrandtplein Hotel is often mistaken for the square itself in ride-hailing apps.","Entity_Group":"ORG","Word":"Hotel","Score":"0.3652","Start":119,"End":124}
+{"Test_Case":"label_confusion","Phrase_ID":2,"Phrase":"Just off Oxford Circus, guests check in at a narrow fa\\u00e7ade on Oxford Street, although Oxford Street Hotel officially lists its entrance on Ramillies Place.","Entity_Group":"LOC","Word":"Oxford Circus","Score":"0.9989","Start":9,"End":22}
+{"Test_Case":"label_confusion","Phrase_ID":2,"Phrase":"Just off Oxford Circus, guests check in at a narrow fa\\u00e7ade on Oxford Street, although Oxford Street Hotel officially lists its entrance on Ramillies Place.","Entity_Group":"LOC","Word":"Oxford Street","Score":"0.9994","Start":62,"End":75}
+{"Test_Case":"label_confusion","Phrase_ID":2,"Phrase":"Just off Oxford Circus, guests check in at a narrow fa\\u00e7ade on Oxford Street, although Oxford Street Hotel officially lists its entrance on Ramillies Place.","Entity_Group":"ORG","Word":"Oxford Street Hotel","Score":"0.9991","Start":86,"End":105}
+{"Test_Case":"label_confusion","Phrase_ID":2,"Phrase":"Just off Oxford Circus, guests check in at a narrow fa\\u00e7ade on Oxford Street, although Oxford Street Hotel officially lists its entrance on Ramillies Place.","Entity_Group":"LOC","Word":"Ramillies Place","Score":"0.9852","Start":139,"End":154}
+{"Test_Case":"label_confusion","Phrase_ID":3,"Phrase":"The building at 221B Baker Street operates as a small hotel today, with Baker Street Rooms using the famous address despite being unrelated to the literary landmark.","Entity_Group":"LOC","Word":"221B Baker Street","Score":"0.9413","Start":16,"End":33}
+{"Test_Case":"label_confusion","Phrase_ID":3,"Phrase":"The building at 221B Baker Street operates as a small hotel today, with Baker Street Rooms using the famous address despite being unrelated to the literary landmark.","Entity_Group":"ORG","Word":"Baker Street Rooms","Score":"0.9998","Start":72,"End":90}
+{"Test_Case":"label_confusion","Phrase_ID":4,"Phrase":"Facing Dam Square and the Royal Palace, rooms here are marketed under the name Dam Square Hotel, even though the registered address is Damrak 7.","Entity_Group":"LOC","Word":"Dam Square","Score":"0.9999","Start":7,"End":17}
+{"Test_Case":"label_confusion","Phrase_ID":4,"Phrase":"Facing Dam Square and the Royal Palace, rooms here are marketed under the name Dam Square Hotel, even though the registered address is Damrak 7.","Entity_Group":"LOC","Word":"Royal Palace","Score":"0.9857","Start":26,"End":38}
+{"Test_Case":"label_confusion","Phrase_ID":4,"Phrase":"Facing Dam Square and the Royal Palace, rooms here are marketed under the name Dam Square Hotel, even though the registered address is Damrak 7.","Entity_Group":"ORG","Word":"Dam Square Hotel","Score":"0.9742","Start":79,"End":95}
+{"Test_Case":"label_confusion","Phrase_ID":4,"Phrase":"Facing Dam Square and the Royal Palace, rooms here are marketed under the name Dam Square Hotel, even though the registered address is Damrak 7.","Entity_Group":"LOC","Word":"Damrak","Score":"0.9269","Start":135,"End":141}
+{"Test_Case":"label_confusion","Phrase_ID":5,"Phrase":"Although its windows overlook Museumplein, the property is entered via Honthorststraat; Museumplein Residence uses the square name primarily for branding.","Entity_Group":"LOC","Word":"Museumplein","Score":"0.9998","Start":30,"End":41}
+{"Test_Case":"label_confusion","Phrase_ID":5,"Phrase":"Although its windows overlook Museumplein, the property is entered via Honthorststraat; Museumplein Residence uses the square name primarily for branding.","Entity_Group":"LOC","Word":"Honthorststraat","Score":"0.9952","Start":71,"End":86}
+{"Test_Case":"label_confusion","Phrase_ID":5,"Phrase":"Although its windows overlook Museumplein, the property is entered via Honthorststraat; Museumplein Residence uses the square name primarily for branding.","Entity_Group":"ORG","Word":"Museumplein Residence","Score":"0.9995","Start":88,"End":109}
+{"Test_Case":"label_confusion","Phrase_ID":6,"Phrase":"Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.","Entity_Group":"LOC","Word":"Grand Canal","Score":"1.0000","Start":23,"End":34}
+{"Test_Case":"label_confusion","Phrase_ID":6,"Phrase":"Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.","Entity_Group":"ORG","Word":"Grand","Score":"0.9089","Start":63,"End":68}
+{"Test_Case":"label_confusion","Phrase_ID":6,"Phrase":"Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.","Entity_Group":"LOC","Word":"Canal","Score":"0.5086","Start":69,"End":74}
+{"Test_Case":"label_confusion","Phrase_ID":6,"Phrase":"Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.","Entity_Group":"ORG","Word":"Hotel","Score":"0.8936","Start":75,"End":80}
+{"Test_Case":"label_confusion","Phrase_ID":6,"Phrase":"Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.","Entity_Group":"LOC","Word":"Fondamenta San Simeon Piccolo","Score":"0.9998","Start":113,"End":142}
+{"Test_Case":"label_confusion","Phrase_ID":7,"Phrase":"Near the Colosseum metro stop, check-in takes place on Via dei Fori Imperiali, while the accommodation itself is branded as Colosseum Metro Hotel.","Entity_Group":"LOC","Word":"Colosseum","Score":"1.0000","Start":9,"End":18}
+{"Test_Case":"label_confusion","Phrase_ID":7,"Phrase":"Near the Colosseum metro stop, check-in takes place on Via dei Fori Imperiali, while the accommodation itself is branded as Colosseum Metro Hotel.","Entity_Group":"LOC","Word":"Via dei Fori Imperiali","Score":"0.9830","Start":55,"End":77}
+{"Test_Case":"label_confusion","Phrase_ID":7,"Phrase":"Near the Colosseum metro stop, check-in takes place on Via dei Fori Imperiali, while the accommodation itself is branded as Colosseum Metro Hotel.","Entity_Group":"LOC","Word":"Colosseum","Score":"0.7379","Start":124,"End":133}
+{"Test_Case":"label_confusion","Phrase_ID":7,"Phrase":"Near the Colosseum metro stop, check-in takes place on Via dei Fori Imperiali, while the accommodation itself is branded as Colosseum Metro Hotel.","Entity_Group":"ORG","Word":"Metro Hotel","Score":"0.7651","Start":134,"End":145}
+{"Test_Case":"label_confusion","Phrase_ID":8,"Phrase":"Marketed as Eiffel Tower Avenue, the hotel is actually set back from the landmark, with its street address listed on Avenue de la Bourdonnais.","Entity_Group":"LOC","Word":"Eiffel Tower Avenue","Score":"0.9983","Start":12,"End":31}
+{"Test_Case":"label_confusion","Phrase_ID":8,"Phrase":"Marketed as Eiffel Tower Avenue, the hotel is actually set back from the landmark, with its street address listed on Avenue de la Bourdonnais.","Entity_Group":"LOC","Word":"Avenue de la Bourdonnais","Score":"0.8943","Start":117,"End":141}
+{"Test_Case":"label_confusion","Phrase_ID":9,"Phrase":"Union Square appears prominently in the property name, yet Union Square Suites is located on Post Street, several blocks west of the plaza.","Entity_Group":"LOC","Word":"Union Square","Score":"0.9999","Start":0,"End":12}
+{"Test_Case":"label_confusion","Phrase_ID":9,"Phrase":"Union Square appears prominently in the property name, yet Union Square Suites is located on Post Street, several blocks west of the plaza.","Entity_Group":"ORG","Word":"Union Square Suites","Score":"0.9778","Start":59,"End":78}
+{"Test_Case":"label_confusion","Phrase_ID":9,"Phrase":"Union Square appears prominently in the property name, yet Union Square Suites is located on Post Street, several blocks west of the plaza.","Entity_Group":"LOC","Word":"Post Street","Score":"0.9994","Start":93,"End":104}
+{"Test_Case":"label_confusion","Phrase_ID":10,"Phrase":"Although commonly referred to as Times Square, the hotel's reception and mailing address are on West 46th Street, where Times Square Suites occupies the upper floors.","Entity_Group":"LOC","Word":"Times Square","Score":"0.9999","Start":33,"End":45}
+{"Test_Case":"label_confusion","Phrase_ID":10,"Phrase":"Although commonly referred to as Times Square, the hotel's reception and mailing address are on West 46th Street, where Times Square Suites occupies the upper floors.","Entity_Group":"LOC","Word":"West 46th Street","Score":"0.9956","Start":96,"End":112}
+{"Test_Case":"label_confusion","Phrase_ID":10,"Phrase":"Although commonly referred to as Times Square, the hotel's reception and mailing address are on West 46th Street, where Times Square Suites occupies the upper floors.","Entity_Group":"ORG","Word":"Times Square Suites","Score":"1.0000","Start":120,"End":139}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":1,"Phrase":"I have a reservation at the Rembrandt Square Hotel on Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.8665","Start":28,"End":50}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":1,"Phrase":"I have a reservation at the Rembrandt Square Hotel on Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":54,"End":70}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":2,"Phrase":"I'm booked at Rembrandt Square Hotel, located in Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt","Score":"0.5205","Start":14,"End":23}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":2,"Phrase":"I'm booked at Rembrandt Square Hotel, located in Rembrandt Square.","Entity_Group":"LOC","Word":"Square","Score":"0.5175","Start":24,"End":30}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":2,"Phrase":"I'm booked at Rembrandt Square Hotel, located in Rembrandt Square.","Entity_Group":"ORG","Word":"Hotel","Score":"0.6685","Start":31,"End":36}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":2,"Phrase":"I'm booked at Rembrandt Square Hotel, located in Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":49,"End":65}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":3,"Phrase":"I have a confirmed booking at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt","Score":"0.5408","Start":30,"End":39}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":3,"Phrase":"I have a confirmed booking at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"LOC","Word":"Square","Score":"0.4320","Start":40,"End":46}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":3,"Phrase":"I have a confirmed booking at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"ORG","Word":"Hotel","Score":"0.5744","Start":47,"End":52}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":3,"Phrase":"I have a confirmed booking at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":56,"End":72}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":4,"Phrase":"I'll be staying at the Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.8341","Start":23,"End":45}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":4,"Phrase":"I'll be staying at the Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":49,"End":65}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":5,"Phrase":"I have accommodation booked at Rembrandt Square Hotel on Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.8939","Start":31,"End":53}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":5,"Phrase":"I have accommodation booked at Rembrandt Square Hotel on Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":57,"End":73}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":6,"Phrase":"I have a hotel booking at Rembrandt Square Hotel, Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.7255","Start":26,"End":48}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":6,"Phrase":"I have a hotel booking at Rembrandt Square Hotel, Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":50,"End":66}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":7,"Phrase":"I'm staying at the Rembrandt Square Hotel in the Rembrandt Square area.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.9661","Start":19,"End":41}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":7,"Phrase":"I'm staying at the Rembrandt Square Hotel in the Rembrandt Square area.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":49,"End":65}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":8,"Phrase":"I've made a reservation at Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.5819","Start":27,"End":49}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":8,"Phrase":"I've made a reservation at Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":53,"End":69}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":9,"Phrase":"My booking is at the Rembrandt Square Hotel, right on Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.7113","Start":21,"End":43}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":9,"Phrase":"My booking is at the Rembrandt Square Hotel, right on Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":54,"End":70}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":10,"Phrase":"I have a confirmed stay at Rembrandt Square Hotel on Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.8428","Start":27,"End":49}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":10,"Phrase":"I have a confirmed stay at Rembrandt Square Hotel on Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":53,"End":69}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":11,"Phrase":"I've booked a room at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.9214","Start":22,"End":44}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":11,"Phrase":"I've booked a room at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":48,"End":64}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":12,"Phrase":"I have lodging reserved at Rembrandt Square Hotel, located at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.7808","Start":27,"End":49}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":12,"Phrase":"I have lodging reserved at Rembrandt Square Hotel, located at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":62,"End":78}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":13,"Phrase":"I have a room booked at the Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.8953","Start":28,"End":50}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":13,"Phrase":"I have a room booked at the Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":54,"End":70}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":14,"Phrase":"I'm checked in at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"ORG","Word":"Rem","Score":"0.5008","Start":18,"End":21}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":14,"Phrase":"I'm checked in at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"LOC","Word":"brandt Square","Score":"0.4839","Start":21,"End":34}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":14,"Phrase":"I'm checked in at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"ORG","Word":"Hotel","Score":"0.5325","Start":35,"End":40}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":14,"Phrase":"I'm checked in at Rembrandt Square Hotel in Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":44,"End":60}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":15,"Phrase":"I have a hotel reservation for Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.9890","Start":31,"End":53}
+{"Test_Case":"rephrasing_sensitivity","Phrase_ID":15,"Phrase":"I have a hotel reservation for Rembrandt Square Hotel at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":57,"End":73}
+{"Test_Case":"placement_sensitivity","Phrase_ID":1,"Phrase":"The Rembrandt Square Hotel located at Rembrandt Square offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.9584","Start":4,"End":26}
+{"Test_Case":"placement_sensitivity","Phrase_ID":1,"Phrase":"The Rembrandt Square Hotel located at Rembrandt Square offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":38,"End":54}
+{"Test_Case":"placement_sensitivity","Phrase_ID":2,"Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":11,"End":27}
+{"Test_Case":"placement_sensitivity","Phrase_ID":2,"Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Rem","Score":"0.6342","Start":33,"End":36}
+{"Test_Case":"placement_sensitivity","Phrase_ID":2,"Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"brand","Score":"0.4665","Start":36,"End":41}
+{"Test_Case":"placement_sensitivity","Phrase_ID":2,"Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"t","Score":"0.5585","Start":41,"End":42}
+{"Test_Case":"placement_sensitivity","Phrase_ID":2,"Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Square","Score":"0.6814","Start":43,"End":49}
+{"Test_Case":"placement_sensitivity","Phrase_ID":2,"Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Hotel","Score":"0.5400","Start":50,"End":55}
+{"Test_Case":"placement_sensitivity","Phrase_ID":3,"Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel is located at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.7269","Start":100,"End":122}
+{"Test_Case":"placement_sensitivity","Phrase_ID":3,"Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel is located at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":137,"End":153}
+{"Test_Case":"placement_sensitivity","Phrase_ID":4,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"ORG","Word":"Rem","Score":"0.5106","Start":104,"End":107}
+{"Test_Case":"placement_sensitivity","Phrase_ID":4,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"LOC","Word":"brand","Score":"0.5079","Start":107,"End":112}
+{"Test_Case":"placement_sensitivity","Phrase_ID":4,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"ORG","Word":"t","Score":"0.4617","Start":112,"End":113}
+{"Test_Case":"placement_sensitivity","Phrase_ID":4,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"LOC","Word":"Square","Score":"0.7135","Start":114,"End":120}
+{"Test_Case":"placement_sensitivity","Phrase_ID":4,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"ORG","Word":"Hotel","Score":"0.4275","Start":121,"End":126}
+{"Test_Case":"placement_sensitivity","Phrase_ID":4,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":138,"End":154}
+{"Test_Case":"placement_sensitivity","Phrase_ID":5,"Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"ORG","Word":"Rem","Score":"0.6138","Start":105,"End":108}
+{"Test_Case":"placement_sensitivity","Phrase_ID":5,"Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"LOC","Word":"brand","Score":"0.4458","Start":108,"End":113}
+{"Test_Case":"placement_sensitivity","Phrase_ID":5,"Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"ORG","Word":"t","Score":"0.5478","Start":113,"End":114}
+{"Test_Case":"placement_sensitivity","Phrase_ID":5,"Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"LOC","Word":"Square","Score":"0.6732","Start":115,"End":121}
+{"Test_Case":"placement_sensitivity","Phrase_ID":5,"Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"ORG","Word":"Hotel","Score":"0.4964","Start":122,"End":127}
+{"Test_Case":"placement_sensitivity","Phrase_ID":5,"Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":139,"End":155}
+{"Test_Case":"placement_sensitivity","Phrase_ID":6,"Phrase":"The Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers and is located at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.9456","Start":4,"End":26}
+{"Test_Case":"placement_sensitivity","Phrase_ID":6,"Phrase":"The Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers and is located at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9998","Start":138,"End":154}
+{"Test_Case":"placement_sensitivity","Phrase_ID":7,"Phrase":"At Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":3,"End":19}
+{"Test_Case":"placement_sensitivity","Phrase_ID":7,"Phrase":"At Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Rembrandt","Score":"0.7243","Start":25,"End":34}
+{"Test_Case":"placement_sensitivity","Phrase_ID":7,"Phrase":"At Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Square","Score":"0.4873","Start":35,"End":41}
+{"Test_Case":"placement_sensitivity","Phrase_ID":7,"Phrase":"At Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Hotel","Score":"0.7451","Start":42,"End":47}
+{"Test_Case":"placement_sensitivity","Phrase_ID":8,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"1.0000","Start":100,"End":116}
+{"Test_Case":"placement_sensitivity","Phrase_ID":8,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","Entity_Group":"ORG","Word":"Rem","Score":"0.7427","Start":124,"End":127}
+{"Test_Case":"placement_sensitivity","Phrase_ID":8,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","Entity_Group":"LOC","Word":"brand","Score":"0.4598","Start":127,"End":132}
+{"Test_Case":"placement_sensitivity","Phrase_ID":8,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","Entity_Group":"ORG","Word":"t","Score":"0.5059","Start":132,"End":133}
+{"Test_Case":"placement_sensitivity","Phrase_ID":8,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","Entity_Group":"LOC","Word":"Square","Score":"0.7069","Start":134,"End":140}
+{"Test_Case":"placement_sensitivity","Phrase_ID":8,"Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","Entity_Group":"ORG","Word":"Hotel","Score":"0.7133","Start":141,"End":146}
+{"Test_Case":"placement_sensitivity","Phrase_ID":9,"Phrase":"The Rembrandt Square Hotel, offering comfortable accommodation in the heart of the city for leisure and business travelers, is located at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.9448","Start":4,"End":26}
+{"Test_Case":"placement_sensitivity","Phrase_ID":9,"Phrase":"The Rembrandt Square Hotel, offering comfortable accommodation in the heart of the city for leisure and business travelers, is located at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9998","Start":138,"End":154}
+{"Test_Case":"placement_sensitivity","Phrase_ID":10,"Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"ORG","Word":"Rembrandt Square Hotel","Score":"0.7308","Start":100,"End":122}
+{"Test_Case":"placement_sensitivity","Phrase_ID":10,"Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel located at Rembrandt Square.","Entity_Group":"LOC","Word":"Rembrandt Square","Score":"0.9999","Start":134,"End":150}
+{"Test_Case":"variable_entity_length","Phrase_ID":1,"Phrase":"The Hotel Six located at 4 Oak St offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Hotel Six","Score":"0.9980","Start":4,"End":13}
+{"Test_Case":"variable_entity_length","Phrase_ID":1,"Phrase":"The Hotel Six located at 4 Oak St offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Oak St","Score":"0.9559","Start":27,"End":33}
+{"Test_Case":"variable_entity_length","Phrase_ID":2,"Phrase":"The Grand Harbor Hotel located at 221B Baker Street offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Grand Harbor Hotel","Score":"0.9165","Start":4,"End":22}
+{"Test_Case":"variable_entity_length","Phrase_ID":2,"Phrase":"The Grand Harbor Hotel located at 221B Baker Street offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"B Baker Street","Score":"0.9092","Start":37,"End":51}
+{"Test_Case":"variable_entity_length","Phrase_ID":3,"Phrase":"The The Royal Crescent Boutique & Spa Hotel located at 18-24 Royal Crescent, Bath BA1 2LS offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"The Royal Crescent","Score":"0.8956","Start":4,"End":22}
+{"Test_Case":"variable_entity_length","Phrase_ID":3,"Phrase":"The The Royal Crescent Boutique & Spa Hotel located at 18-24 Royal Crescent, Bath BA1 2LS offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Royal Crescent","Score":"0.9974","Start":61,"End":75}
+{"Test_Case":"variable_entity_length","Phrase_ID":3,"Phrase":"The The Royal Crescent Boutique & Spa Hotel located at 18-24 Royal Crescent, Bath BA1 2LS offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Bath","Score":"0.9997","Start":77,"End":81}
+{"Test_Case":"variable_entity_length","Phrase_ID":4,"Phrase":"The M Hotel located at 9 Rue du Bac offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"M Hotel","Score":"0.9810","Start":4,"End":11}
+{"Test_Case":"variable_entity_length","Phrase_ID":4,"Phrase":"The M Hotel located at 9 Rue du Bac offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Rue du Bac","Score":"0.8359","Start":25,"End":35}
+{"Test_Case":"variable_entity_length","Phrase_ID":5,"Phrase":"The The St. Augustine Waterfront Conference Hotel & Suites located at 500 Avenida Menendez, St. Augustine, FL 32084 offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"St. Augustine","Score":"0.9392","Start":8,"End":21}
+{"Test_Case":"variable_entity_length","Phrase_ID":5,"Phrase":"The The St. Augustine Waterfront Conference Hotel & Suites located at 500 Avenida Menendez, St. Augustine, FL 32084 offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Avenida Menendez","Score":"0.9634","Start":74,"End":90}
+{"Test_Case":"variable_entity_length","Phrase_ID":5,"Phrase":"The The St. Augustine Waterfront Conference Hotel & Suites located at 500 Avenida Menendez, St. Augustine, FL 32084 offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"St. Augustine","Score":"0.9999","Start":92,"End":105}
+{"Test_Case":"variable_entity_length","Phrase_ID":5,"Phrase":"The The St. Augustine Waterfront Conference Hotel & Suites located at 500 Avenida Menendez, St. Augustine, FL 32084 offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"FL","Score":"0.9940","Start":107,"End":109}
+{"Test_Case":"variable_entity_length","Phrase_ID":6,"Phrase":"The Noor located at 1 Al Noor Rd offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"The Noor","Score":"0.9975","Start":0,"End":8}
+{"Test_Case":"variable_entity_length","Phrase_ID":6,"Phrase":"The Noor located at 1 Al Noor Rd offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"1 Al Noor Rd","Score":"0.9036","Start":20,"End":32}
+{"Test_Case":"variable_entity_length","Phrase_ID":7,"Phrase":"The Hotel de l'Op\\u00e9ra located at 2 Place de l'Op\\u00e9ra offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"Hotel de l'Op\\u00e9ra","Score":"0.9616","Start":4,"End":20}
+{"Test_Case":"variable_entity_length","Phrase_ID":7,"Phrase":"The Hotel de l'Op\\u00e9ra located at 2 Place de l'Op\\u00e9ra offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Place de l'Op\\u00e9ra","Score":"0.9921","Start":34,"End":50}
+{"Test_Case":"variable_entity_length","Phrase_ID":8,"Phrase":"The The International Travelers' Rest Hotel, Residences, and Extended Stay located at 7777 West Great Northern Boulevard, Building C, Suite 120 offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"The International Travelers","Score":"0.7446","Start":4,"End":31}
+{"Test_Case":"variable_entity_length","Phrase_ID":8,"Phrase":"The The International Travelers' Rest Hotel, Residences, and Extended Stay located at 7777 West Great Northern Boulevard, Building C, Suite 120 offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"777 West Great Northern Boulevard","Score":"0.9840","Start":87,"End":120}
+{"Test_Case":"variable_entity_length","Phrase_ID":9,"Phrase":"The Ivy located at 10 Downing St offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"The Ivy","Score":"0.9994","Start":0,"End":7}
+{"Test_Case":"variable_entity_length","Phrase_ID":9,"Phrase":"The Ivy located at 10 Downing St offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Downing St","Score":"0.9769","Start":22,"End":32}
+{"Test_Case":"variable_entity_length","Phrase_ID":10,"Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"F","Score":"0.6058","Start":8,"End":9}
+{"Test_Case":"variable_entity_length","Phrase_ID":10,"Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"ORG","Word":"jord","Score":"0.3636","Start":9,"End":13}
+{"Test_Case":"variable_entity_length","Phrase_ID":10,"Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"view Mountain","Score":"0.6310","Start":13,"End":26}
+{"Test_Case":"variable_entity_length","Phrase_ID":10,"Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Northern Lights","Score":"0.7417","Start":35,"End":50}
+{"Test_Case":"variable_entity_length","Phrase_ID":10,"Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"MISC","Word":"Scenic Route 9","Score":"0.9997","Start":84,"End":98}
+{"Test_Case":"variable_entity_length","Phrase_ID":10,"Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","Entity_Group":"LOC","Word":"Longyear Valley","Score":"0.9996","Start":100,"End":115}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":1,"Phrase":"The Riverside Hotel is located on Market Street, just behind the central railway station, at number 128, making it easy to reach from anywhere in the city.","Entity_Group":"ORG","Word":"Riverside Hotel","Score":"0.9945","Start":4,"End":19}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":1,"Phrase":"The Riverside Hotel is located on Market Street, just behind the central railway station, at number 128, making it easy to reach from anywhere in the city.","Entity_Group":"LOC","Word":"Market Street","Score":"0.9995","Start":34,"End":47}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":2,"Phrase":"Situated on Boulevard Saint-Michel, a short walk from the Sorbonne and directly opposite the public gardens, the hotel can be found at No. 22.","Entity_Group":"LOC","Word":"Boulevard Saint-Michel","Score":"0.9928","Start":12,"End":34}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":2,"Phrase":"Situated on Boulevard Saint-Michel, a short walk from the Sorbonne and directly opposite the public gardens, the hotel can be found at No. 22.","Entity_Group":"ORG","Word":"Sorbonne","Score":"0.9986","Start":58,"End":66}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":3,"Phrase":"This modern business hotel stands on King Street, between the old courthouse and the financial district, with its main entrance at building 77.","Entity_Group":"LOC","Word":"King Street","Score":"0.9995","Start":37,"End":48}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":4,"Phrase":"Guests will find the property on Via Roma, adjacent to the historic opera house and near the main shopping arcade, at street number 45.","Entity_Group":"LOC","Word":"Via Roma","Score":"0.9977","Start":33,"End":41}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":5,"Phrase":"The hotel occupies a quiet spot on Elm Road, just past the city library and before the river bridge, at 310 Elm Road.","Entity_Group":"LOC","Word":"Elm Road","Score":"0.9997","Start":35,"End":43}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":5,"Phrase":"The hotel occupies a quiet spot on Elm Road, just past the city library and before the river bridge, at 310 Elm Road.","Entity_Group":"LOC","Word":"Elm Road","Score":"0.9988","Start":108,"End":116}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":6,"Phrase":"Located on Avenida Paulista, close to the metro station and across from the art museum, the hotel's official address is number 1578.","Entity_Group":"LOC","Word":"Avenida Paulista","Score":"0.9967","Start":11,"End":27}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":7,"Phrase":"The boutique hotel sits on Baker Street, a few doors down from the famous museum and next to a small caf\\u00e9, at No. 221B.","Entity_Group":"LOC","Word":"Baker Street","Score":"0.9954","Start":27,"End":39}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":8,"Phrase":"You'll find the hotel on Queen's Road, near the waterfront promenade and behind the convention center, with the address listed as 89 Queen's Road.","Entity_Group":"LOC","Word":"Queen's Road","Score":"1.0000","Start":25,"End":37}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":8,"Phrase":"You'll find the hotel on Queen's Road, near the waterfront promenade and behind the convention center, with the address listed as 89 Queen's Road.","Entity_Group":"LOC","Word":"Queen's Road","Score":"0.9998","Start":133,"End":145}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":9,"Phrase":"Set on Friedrichstra\\u00dfe, within walking distance of Checkpoint Charlie and surrounded by shops, the hotel is registered at number 102.","Entity_Group":"LOC","Word":"Friedrichstra\\u00dfe","Score":"0.9993","Start":7,"End":22}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":9,"Phrase":"Set on Friedrichstra\\u00dfe, within walking distance of Checkpoint Charlie and surrounded by shops, the hotel is registered at number 102.","Entity_Group":"LOC","Word":"Checkpoint Charlie","Score":"0.9999","Start":51,"End":69}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":10,"Phrase":"The property is located on Ocean Drive, directly facing the beach and beside the historic lifeguard station, at 1400 Ocean Drive.","Entity_Group":"LOC","Word":"Ocean Drive","Score":"0.9997","Start":27,"End":38}
+{"Test_Case":"discontinuous_entity_handling","Phrase_ID":10,"Phrase":"The property is located on Ocean Drive, directly facing the beach and beside the historic lifeguard station, at 1400 Ocean Drive.","Entity_Group":"LOC","Word":"Ocean Drive","Score":"0.9994","Start":117,"End":128}
+{"Test_Case":"spelling_errors","Phrase_ID":1,"Phrase":"The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.","Entity_Group":"ORG","Word":"Grand Hiltno","Score":"0.8078","Start":4,"End":16}
+{"Test_Case":"spelling_errors","Phrase_ID":1,"Phrase":"The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.","Entity_Group":"LOC","Word":"Brodway Avnue","Score":"0.8935","Start":50,"End":63}
+{"Test_Case":"spelling_errors","Phrase_ID":1,"Phrase":"The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.","Entity_Group":"LOC","Word":"New Yrok","Score":"1.0000","Start":65,"End":73}
+{"Test_Case":"spelling_errors","Phrase_ID":1,"Phrase":"The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.","Entity_Group":"MISC","Word":"Hilt","Score":"0.7901","Start":80,"End":84}
+{"Test_Case":"spelling_errors","Phrase_ID":1,"Phrase":"The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.","Entity_Group":"LOC","Word":"no","Score":"0.8135","Start":84,"End":86}
+{"Test_Case":"spelling_errors","Phrase_ID":2,"Phrase":"Stay at the Marrioot Marquis in downtown Chciago, situatd at 456 Michgan Avene. The Marrioot is known for its premuim service and conveinent loction near the river.","Entity_Group":"ORG","Word":"Marrioot Marquis","Score":"0.9918","Start":12,"End":28}
+{"Test_Case":"spelling_errors","Phrase_ID":2,"Phrase":"Stay at the Marrioot Marquis in downtown Chciago, situatd at 456 Michgan Avene. The Marrioot is known for its premuim service and conveinent loction near the river.","Entity_Group":"LOC","Word":"Chciago","Score":"0.9998","Start":41,"End":48}
+{"Test_Case":"spelling_errors","Phrase_ID":2,"Phrase":"Stay at the Marrioot Marquis in downtown Chciago, situatd at 456 Michgan Avene. The Marrioot is known for its premuim service and conveinent loction near the river.","Entity_Group":"LOC","Word":"Michgan Avene","Score":"0.9819","Start":65,"End":78}
+{"Test_Case":"spelling_errors","Phrase_ID":2,"Phrase":"Stay at the Marrioot Marquis in downtown Chciago, situatd at 456 Michgan Avene. The Marrioot is known for its premuim service and conveinent loction near the river.","Entity_Group":"ORG","Word":"Marrioot","Score":"0.9995","Start":84,"End":92}
+{"Test_Case":"spelling_errors","Phrase_ID":3,"Phrase":"The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.","Entity_Group":"ORG","Word":"Hyatt Regncy","Score":"0.9911","Start":4,"End":16}
+{"Test_Case":"spelling_errors","Phrase_ID":3,"Phrase":"The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.","Entity_Group":"LOC","Word":"San Frnacisco","Score":"0.9999","Start":17,"End":30}
+{"Test_Case":"spelling_errors","Phrase_ID":3,"Phrase":"The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.","Entity_Group":"LOC","Word":"Embarcdero Rd","Score":"0.9906","Start":51,"End":64}
+{"Test_Case":"spelling_errors","Phrase_ID":3,"Phrase":"The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.","Entity_Group":"MISC","Word":"Hy","Score":"0.6911","Start":71,"End":73}
+{"Test_Case":"spelling_errors","Phrase_ID":3,"Phrase":"The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.","Entity_Group":"ORG","Word":"at","Score":"0.7222","Start":73,"End":75}
+{"Test_Case":"spelling_errors","Phrase_ID":4,"Phrase":"Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.","Entity_Group":"ORG","Word":"Sheraton","Score":"0.8292","Start":31,"End":39}
+{"Test_Case":"spelling_errors","Phrase_ID":4,"Phrase":"Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.","Entity_Group":"ORG","Word":"Times","Score":"0.5034","Start":41,"End":46}
+{"Test_Case":"spelling_errors","Phrase_ID":4,"Phrase":"Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.","Entity_Group":"LOC","Word":"7th Avnue","Score":"0.7274","Start":76,"End":85}
+{"Test_Case":"spelling_errors","Phrase_ID":4,"Phrase":"Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.","Entity_Group":"LOC","Word":"New Yrok City","Score":"1.0000","Start":87,"End":100}
+{"Test_Case":"spelling_errors","Phrase_ID":4,"Phrase":"Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.","Entity_Group":"ORG","Word":"Sheraton","Score":"0.7981","Start":106,"End":114}
+{"Test_Case":"spelling_errors","Phrase_ID":5,"Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","Entity_Group":"ORG","Word":"Intercontinetal Lond","Score":"0.9308","Start":4,"End":24}
+{"Test_Case":"spelling_errors","Phrase_ID":5,"Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","Entity_Group":"LOC","Word":"n Park Lane","Score":"0.9488","Start":24,"End":35}
+{"Test_Case":"spelling_errors","Phrase_ID":5,"Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","Entity_Group":"LOC","Word":"Park Ln","Score":"0.9924","Start":63,"End":70}
+{"Test_Case":"spelling_errors","Phrase_ID":5,"Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","Entity_Group":"LOC","Word":"Londn","Score":"1.0000","Start":72,"End":77}
+{"Test_Case":"spelling_errors","Phrase_ID":5,"Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","Entity_Group":"MISC","Word":"Intercon","Score":"0.7960","Start":84,"End":92}
+{"Test_Case":"spelling_errors","Phrase_ID":5,"Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","Entity_Group":"ORG","Word":"inen","Score":"0.5074","Start":92,"End":96}
+{"Test_Case":"spelling_errors","Phrase_ID":5,"Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","Entity_Group":"MISC","Word":"tal","Score":"0.5714","Start":96,"End":99}
+{"Test_Case":"spelling_errors","Phrase_ID":6,"Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","Entity_Group":"ORG","Word":"Ritz-Carlon","Score":"0.9803","Start":23,"End":34}
+{"Test_Case":"spelling_errors","Phrase_ID":6,"Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","Entity_Group":"LOC","Word":"n Los Angles","Score":"0.8614","Start":34,"End":46}
+{"Test_Case":"spelling_errors","Phrase_ID":6,"Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","Entity_Group":"LOC","Word":"W","Score":"0.8457","Start":62,"End":63}
+{"Test_Case":"spelling_errors","Phrase_ID":6,"Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","Entity_Group":"MISC","Word":"Olymp","Score":"0.6646","Start":64,"End":69}
+{"Test_Case":"spelling_errors","Phrase_ID":6,"Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","Entity_Group":"LOC","Word":"c Blvd","Score":"0.8962","Start":69,"End":75}
+{"Test_Case":"spelling_errors","Phrase_ID":6,"Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","Entity_Group":"ORG","Word":"Ritz","Score":"0.9994","Start":81,"End":85}
+{"Test_Case":"spelling_errors","Phrase_ID":6,"Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","Entity_Group":"ORG","Word":"Carlon","Score":"0.9968","Start":86,"End":92}
+{"Test_Case":"spelling_errors","Phrase_ID":7,"Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","Entity_Group":"ORG","Word":"Westin","Score":"0.9864","Start":4,"End":10}
+{"Test_Case":"spelling_errors","Phrase_ID":7,"Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","Entity_Group":"LOC","Word":"St. Fransis San Frnacisco","Score":"0.9991","Start":11,"End":36}
+{"Test_Case":"spelling_errors","Phrase_ID":7,"Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","Entity_Group":"LOC","Word":"Powel Stret","Score":"0.9715","Start":55,"End":66}
+{"Test_Case":"spelling_errors","Phrase_ID":7,"Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","Entity_Group":"MISC","Word":"Westn","Score":"0.9988","Start":73,"End":78}
+{"Test_Case":"spelling_errors","Phrase_ID":7,"Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","Entity_Group":"MISC","Word":"Heavenl Bed","Score":"0.9894","Start":98,"End":109}
+{"Test_Case":"spelling_errors","Phrase_ID":7,"Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","Entity_Group":"LOC","Word":"Union Sqaure","Score":"0.8418","Start":142,"End":154}
+{"Test_Case":"spelling_errors","Phrase_ID":8,"Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","Entity_Group":"ORG","Word":"Holidy Inn","Score":"0.9908","Start":26,"End":36}
+{"Test_Case":"spelling_errors","Phrase_ID":8,"Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","Entity_Group":"MISC","Word":"Exp","Score":"0.4960","Start":37,"End":40}
+{"Test_Case":"spelling_errors","Phrase_ID":8,"Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","Entity_Group":"LOC","Word":"Boston","Score":"0.9989","Start":44,"End":50}
+{"Test_Case":"spelling_errors","Phrase_ID":8,"Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","Entity_Group":"LOC","Word":"Bexer Stret","Score":"0.9896","Start":66,"End":77}
+{"Test_Case":"spelling_errors","Phrase_ID":8,"Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","Entity_Group":"ORG","Word":"Holidy Inn","Score":"0.8736","Start":84,"End":94}
+{"Test_Case":"spelling_errors","Phrase_ID":8,"Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","Entity_Group":"MISC","Word":"Exp","Score":"0.8072","Start":95,"End":98}
+{"Test_Case":"spelling_errors","Phrase_ID":8,"Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","Entity_Group":"MISC","Word":"WiFi","Score":"0.5978","Start":142,"End":146}
+{"Test_Case":"spelling_errors","Phrase_ID":9,"Phrase":"The DoubleTree by Hliton Amsterdm Centrl Sttion can be found at Oosterdoksstrat 4. This DoubleTee hotel is known for its warm cookie welcomme and modern facilties.","Entity_Group":"ORG","Word":"DoubleTree by Hliton","Score":"0.9481","Start":4,"End":24}
+{"Test_Case":"spelling_errors","Phrase_ID":9,"Phrase":"The DoubleTree by Hliton Amsterdm Centrl Sttion can be found at Oosterdoksstrat 4. This DoubleTee hotel is known for its warm cookie welcomme and modern facilties.","Entity_Group":"LOC","Word":"Amsterdm Centrl Sttion","Score":"0.9387","Start":25,"End":47}
+{"Test_Case":"spelling_errors","Phrase_ID":9,"Phrase":"The DoubleTree by Hliton Amsterdm Centrl Sttion can be found at Oosterdoksstrat 4. This DoubleTee hotel is known for its warm cookie welcomme and modern facilties.","Entity_Group":"LOC","Word":"Oosterdoksstrat","Score":"0.8366","Start":64,"End":79}
+{"Test_Case":"spelling_errors","Phrase_ID":9,"Phrase":"The DoubleTree by Hliton Amsterdm Centrl Sttion can be found at Oosterdoksstrat 4. This DoubleTee hotel is known for its warm cookie welcomme and modern facilties.","Entity_Group":"MISC","Word":"DoubleTee","Score":"0.9833","Start":88,"End":97}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"ORG","Word":"Radisson Blu","Score":"0.9461","Start":12,"End":24}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"LOC","Word":"Ber","Score":"0.6642","Start":25,"End":28}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"MISC","Word":"l","Score":"0.6199","Start":28,"End":29}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"LOC","Word":"n Alexnderplatz","Score":"0.7172","Start":29,"End":44}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"LOC","Word":"Karl-","Score":"0.7139","Start":57,"End":62}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"PER","Word":"Lib","Score":"0.6669","Start":62,"End":65}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"LOC","Word":"knecht-Strse","Score":"0.8398","Start":65,"End":77}
+{"Test_Case":"spelling_errors","Phrase_ID":10,"Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","Entity_Group":"ORG","Word":"Radisson Bllu","Score":"0.7692","Start":85,"End":98}`;
+
+        let data = [];
+        let groupedData = {};
+        let currentTestCase = null;
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        function init() {
+            // Parse JSON lines format
+            const lines = jsonData.trim().split('\n');
+            data = lines.map(line => JSON.parse(line));
+
+            // Group by test case
+            groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.Test_Case]) {
+                    groupedData[item.Test_Case] = {};
+                }
+                if (!groupedData[item.Test_Case][item.Phrase_ID]) {
+                    groupedData[item.Test_Case][item.Phrase_ID] = {
+                        phrase: item.Phrase,
+                        entities: []
+                    };
+                }
+                groupedData[item.Test_Case][item.Phrase_ID].entities.push(item);
+            });
+
+            renderTestCaseList();
+            renderOverallStats();
+
+            // Select first test case
+            const firstTestCase = Object.keys(groupedData)[0];
+            if (firstTestCase) {
+                selectTestCase(firstTestCase);
+            }
+        }
+
+        function renderTestCaseList() {
+            const container = document.getElementById('test-case-list');
+            container.innerHTML = '';
+
+            Object.keys(groupedData).forEach(testCase => {
+                const phraseCount = Object.keys(groupedData[testCase]).length;
+                const btn = document.createElement('button');
+                btn.className = 'test-case-btn';
+                btn.innerHTML = `
+                    ${formatTestCaseName(testCase)}
+                    <span class="count">${phraseCount}</span>
+                `;
+                btn.onclick = () => selectTestCase(testCase);
+                btn.dataset.testCase = testCase;
+                container.appendChild(btn);
+            });
+        }
+
+        function formatTestCaseName(name) {
+            return name.split('_').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        function selectTestCase(testCase) {
+            currentTestCase = testCase;
+            currentFilter = 'all';
+            searchQuery = '';
+            document.querySelector('.search-input').value = '';
+
+            // Update active state
+            document.querySelectorAll('.test-case-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.testCase === testCase);
+            });
+
+            document.getElementById('current-test-case').textContent = formatTestCaseName(testCase);
+
+            renderSummaryCards();
+            renderFilterBar();
+            renderPhrases();
+        }
+
+        function renderSummaryCards() {
+            const container = document.getElementById('summary-cards');
+            const testCaseData = groupedData[currentTestCase];
+
+            // Calculate metrics
+            let totalEntities = 0;
+            let entityCounts = { LOC: 0, ORG: 0, PER: 0, MISC: 0 };
+            let totalScore = 0;
+            let scoreCount = 0;
+            let lowConfidenceCount = 0;
+
+            Object.values(testCaseData).forEach(phrase => {
+                phrase.entities.forEach(entity => {
+                    if (entity.Entity_Group !== 'N/A') {
+                        totalEntities++;
+                        entityCounts[entity.Entity_Group] = (entityCounts[entity.Entity_Group] || 0) + 1;
+                        const score = parseFloat(entity.Score);
+                        totalScore += score;
+                        scoreCount++;
+                        if (score < 0.7) lowConfidenceCount++;
+                    }
+                });
+            });
+
+            const avgScore = scoreCount > 0 ? (totalScore / scoreCount).toFixed(4) : 'N/A';
+            const phraseCount = Object.keys(testCaseData).length;
+
+            container.innerHTML = `
+                <div class="summary-card">
+                    <div class="label">Total Phrases</div>
+                    <div class="value">${phraseCount}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Total Entities</div>
+                    <div class="value">${totalEntities}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Avg Confidence</div>
+                    <div class="value ${getScoreClass(avgScore)}">${avgScore}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Low Confidence</div>
+                    <div class="value score-low">${lowConfidenceCount}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">LOC Entities</div>
+                    <div class="value loc">${entityCounts.LOC}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">ORG Entities</div>
+                    <div class="value org">${entityCounts.ORG}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">PER Entities</div>
+                    <div class="value per">${entityCounts.PER || 0}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">MISC Entities</div>
+                    <div class="value misc">${entityCounts.MISC || 0}</div>
+                </div>
+            `;
+        }
+
+        function renderFilterBar() {
+            const container = document.getElementById('filter-bar');
+            const filters = ['all', 'LOC', 'ORG', 'PER', 'MISC', 'low-confidence'];
+
+            container.innerHTML = filters.map(filter => `
+                <button class="filter-btn ${currentFilter === filter ? 'active' : ''}"
+                        onclick="setFilter('${filter}')">
+                    ${filter === 'all' ? 'All Entities' :
+                      filter === 'low-confidence' ? 'Low Confidence (<0.7)' : filter}
+                </button>
+            `).join('');
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            renderFilterBar();
+            renderPhrases();
+        }
+
+        function handleSearch(query) {
+            searchQuery = query.toLowerCase();
+            renderPhrases();
+        }
+
+        function renderPhrases() {
+            const container = document.getElementById('phrases-container');
+            const testCaseData = groupedData[currentTestCase];
+
+            container.innerHTML = '';
+
+            Object.entries(testCaseData).forEach(([phraseId, phraseData]) => {
+                // Search filter
+                if (searchQuery) {
+                    const phraseMatch = phraseData.phrase.toLowerCase().includes(searchQuery);
+                    const entityMatch = phraseData.entities.some(e =>
+                        e.Word.toLowerCase().includes(searchQuery) ||
+                        e.Entity_Group.toLowerCase().includes(searchQuery)
+                    );
+                    if (!phraseMatch && !entityMatch) return;
+                }
+
+                // Entity type filter
+                let filteredEntities = phraseData.entities.filter(e => e.Entity_Group !== 'N/A');
+
+                if (currentFilter !== 'all' && currentFilter !== 'low-confidence') {
+                    filteredEntities = filteredEntities.filter(e => e.Entity_Group === currentFilter);
+                } else if (currentFilter === 'low-confidence') {
+                    filteredEntities = filteredEntities.filter(e => parseFloat(e.Score) < 0.7);
+                }
+
+                // Skip if no entities match filter (except for 'all')
+                if (currentFilter !== 'all' && filteredEntities.length === 0) {
+                    return;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'phrase-card';
+
+                // Calculate phrase metrics
+                const validEntities = phraseData.entities.filter(e => e.Entity_Group !== 'N/A');
+                const avgScore = validEntities.length > 0
+                    ? (validEntities.reduce((sum, e) => sum + parseFloat(e.Score), 0) / validEntities.length).toFixed(4)
+                    : 'N/A';
+
+                const displayEntities = currentFilter === 'all' ? validEntities : filteredEntities;
+
+                card.innerHTML = `
+                    <div class="phrase-header">
+                        <span class="phrase-id">
+                            <button class="toggle-btn" onclick="toggleCard(this)">▼</button>
+                            Phrase #${phraseId}
+                        </span>
+                        <div class="phrase-metrics">
+                            <span>${validEntities.length} entities</span>
+                            <span class="confidence-indicator">
+                                Avg: <span class="avg-score ${getScoreClass(avgScore)}">${avgScore}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="phrase-text">
+                        ${highlightEntities(phraseData.phrase, displayEntities)}
+                    </div>
+                    <div class="entity-list">
+                        <div class="entity-list-title">Detected Entities</div>
+                        ${renderEntityTable(displayEntities)}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            if (container.children.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No matches found</h3>
+                        <p>No phrases match the current filter criteria.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleCard(btn) {
+            const card = btn.closest('.phrase-card');
+            card.classList.toggle('collapsed');
+            btn.textContent = card.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        function highlightEntities(text, entities) {
+            if (entities.length === 0) return escapeHtml(text);
+
+            // Sort entities by start position (descending) to avoid position shifting
+            const sortedEntities = [...entities].sort((a, b) => b.Start - a.Start);
+
+            let result = text;
+            sortedEntities.forEach(entity => {
+                const before = result.substring(0, entity.Start);
+                const entityText = result.substring(entity.Start, entity.End);
+                const after = result.substring(entity.End);
+
+                result = before +
+                    `<span class="entity entity-${entity.Entity_Group}">` +
+                    escapeHtml(entityText) +
+                    `<span class="tooltip">${entity.Entity_Group}: ${entity.Score}</span>` +
+                    `</span>` +
+                    after;
+            });
+
+            // Escape parts that aren't already HTML
+            return result;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderEntityTable(entities) {
+            if (entities.length === 0) {
+                return '<p style="color: #94a3b8; font-size: 0.85rem;">No entities detected</p>';
+            }
+
+            return `
+                <table class="entity-table">
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Type</th>
+                            <th>Confidence</th>
+                            <th>Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${entities.map(e => `
+                            <tr>
+                                <td><strong>${escapeHtml(e.Word)}</strong></td>
+                                <td><span class="entity entity-${e.Entity_Group}" style="padding: 2px 8px;">${e.Entity_Group}</span></td>
+                                <td>
+                                    <div class="score-bar">
+                                        <div class="score-fill ${getScoreClass(e.Score)}"
+                                             style="width: ${parseFloat(e.Score) * 100}%"></div>
+                                    </div>
+                                    ${e.Score}
+                                </td>
+                                <td>${e.Start}-${e.End}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function getScoreClass(score) {
+            const s = parseFloat(score);
+            if (isNaN(s)) return '';
+            if (s >= 0.85) return 'score-high';
+            if (s >= 0.7) return 'score-medium';
+            return 'score-low';
+        }
+
+        function renderOverallStats() {
+            const container = document.getElementById('overall-stats');
+
+            let totalPhrases = 0;
+            let totalEntities = 0;
+            let totalScore = 0;
+            let scoreCount = 0;
+
+            Object.values(groupedData).forEach(testCase => {
+                Object.values(testCase).forEach(phrase => {
+                    totalPhrases++;
+                    phrase.entities.forEach(entity => {
+                        if (entity.Entity_Group !== 'N/A') {
+                            totalEntities++;
+                            totalScore += parseFloat(entity.Score);
+                            scoreCount++;
+                        }
+                    });
+                });
+            });
+
+            const avgScore = scoreCount > 0 ? (totalScore / scoreCount).toFixed(4) : 'N/A';
+
+            container.innerHTML = `
+                <h3>Overall Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Test Cases</div>
+                        <div class="stat-value">${Object.keys(groupedData).length}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Total Phrases</div>
+                        <div class="stat-value">${totalPhrases}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Total Entities</div>
+                        <div class="stat-value">${totalEntities}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Avg Confidence</div>
+                        <div class="stat-value">${avgScore}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportCSV() {
+            const testCaseData = groupedData[currentTestCase];
+            let csv = 'Phrase_ID,Phrase,Entity,Type,Score,Start,End\n';
+
+            Object.entries(testCaseData).forEach(([phraseId, phraseData]) => {
+                phraseData.entities.forEach(entity => {
+                    csv += `${phraseId},"${phraseData.phrase.replace(/"/g, '""')}","${entity.Word.replace(/"/g, '""')}",${entity.Entity_Group},${entity.Score},${entity.Start},${entity.End}\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentTestCase}_entities.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
