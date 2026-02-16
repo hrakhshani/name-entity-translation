@@ -1,0 +1,593 @@
+{
+"label_confusion" : [
+  {
+    "text": "On Rembrandtplein, at number 19, this mid-sized property offers 40 rooms above a row of cafés and bars; Rembrandtplein Hotel is often mistaken for the square itself in ride-hailing apps.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Rembrandtplein"},
+      {"label": "HOTEL_NAME", "text": "Rembrandtplein Hotel"}
+    ]
+  },
+  {
+    "text": "Just off Oxford Circus, guests check in at a narrow façade on Oxford Street, although Oxford Street Hotel officially lists its entrance on Ramillies Place.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Oxford Circus"},
+      {"label": "STREET_NAME", "text": "Oxford Street"},
+      {"label": "HOTEL_NAME", "text": "Oxford Street Hotel"},
+      {"label": "STREET_NAME", "text": "Ramillies Place"}
+    ]
+  },
+  {
+    "text": "The building at 221B Baker Street operates as a small hotel today, with Baker Street Rooms using the famous address despite being unrelated to the literary landmark.",
+    "entities": [
+      {"label": "ADDRESS", "text": "221B Baker Street"},
+      {"label": "HOTEL_NAME", "text": "Baker Street Rooms"}
+    ]
+  },
+  {
+    "text": "Facing Dam Square and the Royal Palace, rooms here are marketed under the name Dam Square Hotel, even though the registered address is Damrak 7.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Dam Square"},
+      {"label": "LANDMARK", "text": "Royal Palace"},
+      {"label": "HOTEL_NAME", "text": "Dam Square Hotel"},
+      {"label": "ADDRESS", "text": "Damrak 7"}
+    ]
+  },
+  {
+    "text": "Although its windows overlook Museumplein, the property is entered via Honthorststraat; Museumplein Residence uses the square name primarily for branding.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Museumplein"},
+      {"label": "STREET_NAME", "text": "Honthorststraat"},
+      {"label": "HOTEL_NAME", "text": "Museumplein Residence"}
+    ]
+  },
+  {
+    "text": "Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Grand Canal"},
+      {"label": "HOTEL_NAME", "text": "Grand Canal Hotel"},
+      {"label": "STREET_NAME", "text": "Fondamenta San Simeon Piccolo"}
+    ]
+  },
+  {
+    "text": "Near the Colosseum metro stop, check-in takes place on Via dei Fori Imperiali, while the accommodation itself is branded as Colosseum Metro Hotel.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Colosseum"},
+      {"label": "STREET_NAME", "text": "Via dei Fori Imperiali"},
+      {"label": "HOTEL_NAME", "text": "Colosseum Metro Hotel"}
+    ]
+  },
+  {
+    "text": "Marketed as Eiffel Tower Avenue, the hotel is actually set back from the landmark, with its street address listed on Avenue de la Bourdonnais.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Eiffel Tower Avenue"},
+      {"label": "LANDMARK", "text": "Eiffel Tower"},
+      {"label": "STREET_NAME", "text": "Avenue de la Bourdonnais"}
+    ]
+  },
+  {
+    "text": "Union Square appears prominently in the property name, yet Union Square Suites is located on Post Street, several blocks west of the plaza.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Union Square"},
+      {"label": "HOTEL_NAME", "text": "Union Square Suites"},
+      {"label": "STREET_NAME", "text": "Post Street"}
+    ]
+  },
+  {
+    "text": "Although commonly referred to as Times Square, the hotel's reception and mailing address are on West 46th Street, where Times Square Suites occupies the upper floors.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Times Square"},
+      {"label": "STREET_NAME", "text": "West 46th Street"},
+      {"label": "HOTEL_NAME", "text": "Times Square Suites"}
+    ]
+  }
+],
+"rephrasing_sensitivity": [
+  {
+    "text": "I have a reservation at the Rembrandt Square Hotel on Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 27, "end": 48},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 52, "end": 67}
+    ]
+  },
+  {
+    "text": "I'm booked at Rembrandt Square Hotel, located in Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 14, "end": 35},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 48, "end": 63}
+    ]
+  },
+  {
+    "text": "I have a confirmed booking at Rembrandt Square Hotel in Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 28, "end": 49},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 53, "end": 68}
+    ]
+  },
+  {
+    "text": "I'll be staying at the Rembrandt Square Hotel at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 23, "end": 44},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 48, "end": 63}
+    ]
+  },
+  {
+    "text": "I have accommodation booked at Rembrandt Square Hotel on Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 28, "end": 49},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 53, "end": 68}
+    ]
+  },
+  {
+    "text": "I have a hotel booking at Rembrandt Square Hotel, Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 25, "end": 46},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 48, "end": 63}
+    ]
+  },
+  {
+    "text": "I'm staying at the Rembrandt Square Hotel in the Rembrandt Square area.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 18, "end": 39},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 51, "end": 66}
+    ]
+  },
+  {
+    "text": "I've made a reservation at Rembrandt Square Hotel at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 27, "end": 48},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 52, "end": 67}
+    ]
+  },
+  {
+    "text": "My booking is at the Rembrandt Square Hotel, right on Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 21, "end": 42},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 53, "end": 68}
+    ]
+  },
+  {
+    "text": "I have a confirmed stay at Rembrandt Square Hotel on Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 25, "end": 46},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 50, "end": 65}
+    ]
+  },
+  {
+    "text": "I've booked a room at Rembrandt Square Hotel in Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 21, "end": 42},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 46, "end": 61}
+    ]
+  },
+  {
+    "text": "I have lodging reserved at Rembrandt Square Hotel, located at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 25, "end": 46},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 59, "end": 74}
+    ]
+  },
+  {
+    "text": "I have a room booked at the Rembrandt Square Hotel at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 27, "end": 48},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 52, "end": 67}
+    ]
+  },
+  {
+    "text": "I'm checked in at Rembrandt Square Hotel in Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 17, "end": 38},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 42, "end": 57}
+    ]
+  },
+  {
+    "text": "I have a hotel reservation for Rembrandt Square Hotel at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel", "start": 29, "end": 50},
+      {"label": "LANDMARK", "text": "Rembrandt Square", "start": 54, "end": 69}
+    ]
+  }
+],
+"placement_sensitivity":[
+  {
+    "text": "The Rembrandt Square Hotel located at Rembrandt Square offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"},
+      {"label": "LANDMARK", "text": "Rembrandt Square"}
+    ]
+  },
+  {
+    "text": "Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Rembrandt Square"},
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"}
+    ]
+  },
+  {
+    "text": "Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel is located at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"},
+      {"label": "LANDMARK", "text": "Rembrandt Square"}
+    ]
+  },
+  {
+    "text": "Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"},
+      {"label": "LANDMARK", "text": "Rembrandt Square"}
+    ]
+  },
+  {
+    "text": "For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"},
+      {"label": "LANDMARK", "text": "Rembrandt Square"}
+    ]
+  },
+  {
+    "text": "The Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers and is located at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"},
+      {"label": "LANDMARK", "text": "Rembrandt Square"}
+    ]
+  },
+  {
+    "text": "At Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Rembrandt Square"},
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"}
+    ]
+  },
+  {
+    "text": "Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.",
+    "entities": [
+      {"label": "LANDMARK", "text": "Rembrandt Square"},
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"}
+    ]
+  },
+  {
+    "text": "The Rembrandt Square Hotel, offering comfortable accommodation in the heart of the city for leisure and business travelers, is located at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"},
+      {"label": "LANDMARK", "text": "Rembrandt Square"}
+    ]
+  },
+  {
+    "text": "Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel located at Rembrandt Square.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Rembrandt Square Hotel"},
+      {"label": "LANDMARK", "text": "Rembrandt Square"}
+    ]
+  }
+],
+"variable_entity_length": [
+  {
+    "text": "The Hotel Six located at 4 Oak St offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Hotel Six"},
+      {"label": "ADDRESS", "text": "4 Oak St"}
+    ]
+  },
+  {
+    "text": "The Grand Harbor Hotel located at 221B Baker Street offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Grand Harbor Hotel"},
+      {"label": "ADDRESS", "text": "221B Baker Street"}
+    ]
+  },
+  {
+    "text": "The The Royal Crescent Boutique & Spa Hotel located at 18-24 Royal Crescent, Bath BA1 2LS offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "The Royal Crescent Boutique & Spa Hotel"},
+      {"label": "ADDRESS", "text": "18-24 Royal Crescent, Bath BA1 2LS"},
+    ]
+  },
+  {
+    "text": "The M Hotel located at 9 Rue du Bac offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "M Hotel"},
+      {"label": "ADDRESS", "text": "9 Rue du Bac"}
+    ]
+  },
+  {
+    "text": "The The St. Augustine Waterfront Conference Hotel & Suites located at 500 Avenida Menendez, St. Augustine, FL 32084 offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "The St. Augustine Waterfront Conference Hotel & Suites"},
+      {"label": "ADDRESS", "text": "500 Avenida Menendez, St. Augustine, FL 32084"},
+    ]
+  },
+  {
+    "text": "The Noor located at 1 Al Noor Rd offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Noor"},
+      {"label": "ADDRESS", "text": "1 Al Noor Rd"}
+    ]
+  },
+  {
+    "text": "The Hotel de l'Opéra located at 2 Place de l'Opéra offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Hotel de l'Opéra"},
+      {"label": "ADDRESS", "text": "2 Place de l'Opéra"}
+    ]
+  },
+  {
+    "text": "The The International Travelers' Rest Hotel, Residences, and Extended Stay located at 7777 West Great Northern Boulevard, Building C, Suite 120 offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "The International Travelers' Rest Hotel, Residences, and Extended Stay"},
+      {"label": "ADDRESS", "text": "7777 West Great Northern Boulevard, Building C, Suite 120"}
+    ]
+  },
+  {
+    "text": "The Ivy located at 10 Downing St offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "Ivy"},
+      {"label": "ADDRESS", "text": "10 Downing St"}
+    ]
+  },
+  {
+    "text": "The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.",
+    "entities": [
+      {"label": "HOTEL_NAME", "text": "The Fjordview Mountain Lodge & Northern Lights Retreat"},
+      {"label": "ADDRESS", "text": "Kilometer 12, Scenic Route 9, Longyear Valley"},
+    ]
+  }
+],
+"case_sensitivity_errors": [
+  {
+    "id": "case_sensitivity_errors_01_canonical",
+    "text": "The Riverside Hotel is located at 128 Market Street, near the central railway station.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "The Riverside Hotel" },
+      { "label": "ADDRESS", "text": "128 Market Street" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_01_case_variant",
+    "text": "the riverside hotel is located at 128 market street, near the central railway station.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "the riverside hotel" },
+      { "label": "ADDRESS", "text": "128 market street" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_02_canonical",
+    "text": "Guests can find the Grand Palace Hotel on King Street at Number 77, opposite the courthouse.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Grand Palace Hotel" },
+      { "label": "ADDRESS", "text": "Number 77" },
+      { "label": "STREET_NAME", "text": "King Street" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_02_case_variant",
+    "text": "guests can find the grand palace hotel on king street at number 77, opposite the courthouse.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "grand palace hotel" },
+      { "label": "ADDRESS", "text": "number 77" },
+      { "label": "STREET_NAME", "text": "king street" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_03_canonical",
+    "text": "The Sunrise Boutique Hotel is situated on Ocean Drive at No. 502, facing the waterfront.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Sunrise Boutique Hotel" },
+      { "label": "STREET_NAME", "text": "Ocean Drive" },
+      { "label": "ADDRESS", "text": "No. 502" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_03_case_variant",
+    "text": "the sunrise boutique hotel is situated on ocean drive at no. 502, facing the waterfront.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "sunrise boutique hotel" },
+      { "label": "STREET_NAME", "text": "ocean drive" },
+      { "label": "ADDRESS", "text": "no. 502" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_04_canonical",
+    "text": "The Linden Tree Hotel is located at 310 Elm Road, close to the university campus.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Linden Tree Hotel" },
+      { "label": "ADDRESS", "text": "310 Elm Road" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_04_case_variant",
+    "text": "the linden tree hotel is located at 310 elm road, close to the university campus.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "linden tree hotel" },
+      { "label": "ADDRESS", "text": "310 elm road" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_05_canonical",
+    "text": "Visitors will find the Heritage Hotel at 221B Baker Street, next to the historic museum.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Heritage Hotel" },
+      { "label": "ADDRESS", "text": "221B Baker Street" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_05_case_variant",
+    "text": "visitors will find the heritage hotel at 221b baker street, next to the historic museum.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "heritage hotel" },
+      { "label": "ADDRESS", "text": "221b baker street" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_06_canonical",
+    "text": "The City View Hotel stands on Queen's Road at Number 89, beside the convention center.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "City View Hotel" },
+      { "label": "STREET_NAME", "text": "Queen's Road" },
+      { "label": "ADDRESS", "text": "Number 89" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_06_case_variant",
+    "text": "the city view hotel stands on queen's road at number 89, beside the convention center.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "city view hotel" },
+      { "label": "STREET_NAME", "text": "queen's road" },
+      { "label": "ADDRESS", "text": "number 89" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_07_canonical",
+    "text": "The Urban Stay Hotel is located on Avenida Paulista at 1578, close to the metro station.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Urban Stay Hotel" },
+      { "label": "STREET_NAME", "text": "Avenida Paulista" },
+      { "label": "ADDRESS", "text": "1578" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_07_case_variant",
+    "text": "the urban stay hotel is located on avenida paulista at 1578, close to the metro station.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "urban stay hotel" },
+      { "label": "STREET_NAME", "text": "avenida paulista" },
+      { "label": "ADDRESS", "text": "1578" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_08_canonical",
+    "text": "The Seaside Hotel is positioned at 1400 Ocean Drive, directly facing the beach.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Seaside Hotel" },
+      { "label": "ADDRESS", "text": "1400 Ocean Drive" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_08_case_variant",
+    "text": "the seaside hotel is positioned at 1400 ocean drive, directly facing the beach.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "seaside hotel" },
+      { "label": "ADDRESS", "text": "1400 ocean drive" },
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_09_canonical",
+    "text": "The Mountain Lodge Hotel is found on Alpine Way at No. 64, near the ski lift.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Mountain Lodge Hotel" },
+      { "label": "STREET_NAME", "text": "Alpine Way" },
+      { "label": "ADDRESS", "text": "No. 64" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_09_case_variant",
+    "text": "the mountain lodge hotel is found on alpine way at no. 64, near the ski lift.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "mountain lodge hotel" },
+      { "label": "STREET_NAME", "text": "alpine way" },
+      { "label": "ADDRESS", "text": "no. 64" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_10_canonical",
+    "text": "The Royal Heights Hotel operates from 45 Victoria Street, across from Central Park.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "Royal Heights Hotel" },
+      { "label": "ADDRESS", "text": "45 Victoria Street" },
+      { "label": "LANDMARK", "text": "Central Park" }
+    ]
+  },
+  {
+    "id": "case_sensitivity_errors_10_case_variant",
+    "text": "the royal heights hotel operates from 45 victoria street, across from central park.",
+    "entities": [
+      { "label": "HOTEL_NAME", "text": "royal heights hotel" },
+      { "label": "ADDRESS", "text": "45 victoria street" },
+      { "label": "LANDMARK", "text": "central park" }
+    ]
+  }
+],
+"spelling_errors" :[
+  {
+    "text": "The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "The Grand Hiltno" },
+      { "label": "HOTEL_BRAND", "span": "Hiltno" },
+      { "label": "ADDRESS", "span": "123 Brodway Avnue, New Yrok" },
+    ]
+  },
+  {
+    "text": "Stay at the Marrioot Marquis in downtown Chciago, situatd at 456 Michgan Avene. The Marrioot is known for its premuim service and conveinent loction near the river.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Marrioot Marquis" },
+      { "label": "HOTEL_BRAND", "span": "Marrioot" },
+      { "label": "CITY", "span": "Chciago" },
+      { "label": "ADDRESS", "span": "456 Michgan Avene" },
+    ]
+  },
+  {
+    "text": "The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Hyatt Regncy San Frnacisco" },
+      { "label": "ADDRESS", "span": "789 Embarcdero Rd" },
+      { "label": "HOTEL_BRAND", "span": "Hyat" }
+    ]
+  },
+  {
+    "text": "Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Sheratonn Times Sqaure Hotel" },
+      { "label": "ADDRESS", "span": "811 7th Avnue, New Yrok City" },
+      { "label": "HOTEL_BRAND", "span": "Sheratonn" }
+    ]
+  },
+  {
+    "text": "The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Intercontinetal Londn Park Lane" },
+      { "label": "ADDRESS", "span": "1 Park Ln, Londn" },
+      { "label": "HOTEL_BRAND", "span": "Interconinental" }
+    ]
+  },
+  {
+    "text": "Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Ritz-Carlonn Los Angles" },
+      { "label": "ADDRESS", "span": "900 W Olympc Blvd" },
+      { "label": "HOTEL_BRAND", "span": "Ritz-Carlon" }
+    ]
+  },
+  {
+    "text": "The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Westin St. Fransis San Frnacisco" },
+      { "label": "ADDRESS", "span": "335 Powel Stret" },
+      { "label": "HOTEL_BRAND", "span": "Westn" },
+      { "label": "LANDMARK", "span": "Union Sqaure" }
+    ]
+  },
+  {
+    "text": "Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Holidy Inn Exprss Boston" },
+      { "label": "ADDRESS", "span": "69 Bexer Stret" },
+      { "label": "HOTEL_BRAND", "span": "Holidy Inn Exprss" }
+    ]
+  },
+  {
+    "text": "The DoubleTree by Hliton Amsterdm Centrl Sttion can be found at Oosterdoksstrat 4. This DoubleTee hotel is known for its warm cookie welcomme and modern facilties.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "DoubleTree by Hliton Amsterdm Centrl Sttion" },
+      { "label": "ADDRESS", "span": "Oosterdoksstrat 4" },
+      { "label": "HOTEL_BRAND", "span": "DoubleTee" }
+    ]
+  },
+  {
+    "text": "Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.",
+    "entities": [
+      { "label": "HOTEL_NAME", "span": "Radisson Blu Berln Alexnderplatz" },
+      { "label": "ADDRESS", "span": "Karl-Libknecht-Strse 3" },
+      { "label": "HOTEL_BRAND", "span": "Radisson Bllu" }
+    ]
+  }
+]
+}

@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NER Algorithm Comparison</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #f8f9fb;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --accent-1: #6366f1;
+            --accent-1-light: #eef2ff;
+            --accent-2: #f59e0b;
+            --accent-2-light: #fffbeb;
+            --green: #10b981;
+            --red: #ef4444;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout */
+        .shell { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 24px 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 10;
+        }
+        .sidebar-brand {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #a6adc8;
+            margin-bottom: 4px;
+        }
+        .sidebar-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #cdd6f4;
+            margin-bottom: 28px;
+        }
+        .nav-group-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #585b70;
+            margin: 20px 0 8px 8px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #a6adc8;
+            transition: all 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        .nav-item:hover { background: #313244; color: #cdd6f4; }
+        .nav-item.active { background: var(--accent-1); color: #fff; }
+        .nav-item .badge {
+            margin-left: auto;
+            font-size: 0.7rem;
+            background: rgba(255,255,255,0.12);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .nav-item.active .badge { background: rgba(255,255,255,0.25); }
+        .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+        /* Main */
+        .main {
+            margin-left: 260px;
+            flex: 1;
+            padding: 32px 36px;
+            max-width: 1200px;
+        }
+
+        /* Page header */
+        .page-header {
+            margin-bottom: 28px;
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .page-header p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* KPI row */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .kpi-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+        .kpi-sub {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .kpi-tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+        .kpi-tag.better { background: #d1fae5; color: #065f46; }
+        .kpi-tag.worse { background: #fee2e2; color: #991b1b; }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .card-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+        /* Chart container */
+        .chart-wrap { position: relative; width: 100%; }
+        .chart-wrap canvas { width: 100% !important; }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.82rem;
+        }
+        .data-table thead th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .data-table tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            color: var(--text-primary);
+        }
+        .data-table tbody tr:hover { background: #f9fafb; }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        .algo-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .dot-gliner { background: var(--accent-1); }
+        .dot-spacy { background: var(--accent-2); }
+
+        .metric-bar {
+            display: inline-block;
+            height: 6px;
+            border-radius: 3px;
+            vertical-align: middle;
+        }
+
+        /* Legend */
+        .legend-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Section/page visibility */
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+
+        /* Heatmap */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: 160px repeat(6, 1fr);
+            gap: 2px;
+            font-size: 0.78rem;
+        }
+        .heatmap-header {
+            padding: 8px 6px;
+            font-weight: 600;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .heatmap-row-label {
+            padding: 10px 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        .heatmap-cell {
+            padding: 10px 8px;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 20px; }
+            .kpi-row { grid-template-columns: 1fr; }
+        }
+
+        /* Winner highlight */
+        .winner { font-weight: 700; }
+
+        /* Phrase detail */
+        .phrase-text {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 400px;
+        }
+
+        /* Scroll shadow for table */
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        /* Tab pills for test cases */
+        .pill-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .pill {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+        .pill:hover { border-color: var(--accent-1); color: var(--accent-1); }
+        .pill.active { background: var(--accent-1); color: #fff; border-color: var(--accent-1); }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">NER Benchmark</div>
+        <div class="sidebar-title">Algorithm Comparison</div>
+
+        <div class="nav-group-label">Views</div>
+        <button class="nav-item active" data-page="overview">
+            <span class="nav-icon">&#9632;</span> Overview
+        </button>
+        <button class="nav-item" data-page="heatmap">
+            <span class="nav-icon">&#9638;</span> Heatmap
+        </button>
+        <button class="nav-item" data-page="testcases">
+            <span class="nav-icon">&#9830;</span> Test Cases
+        </button>
+        <button class="nav-item" data-page="details">
+            <span class="nav-icon">&#9776;</span> Phrase Details
+        </button>
+
+        <div class="nav-group-label">Algorithms</div>
+        <div style="padding: 8px 12px;">
+            <div class="legend-item" style="margin-bottom: 8px;">
+                <span class="legend-swatch" style="background: var(--accent-1);"></span>
+                <span>GLiNER</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-swatch" style="background: var(--accent-2);"></span>
+                <span>spaCy</span>
+            </div>
+        </div>
+
+        <div class="nav-group-label">Test Cases</div>
+        <div style="padding: 0 4px; font-size: 0.78rem; color: #585b70; line-height: 1.8;" id="sidebar-test-list"></div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="main">
+
+        <!-- ============ OVERVIEW ============ -->
+        <div class="page-section active" id="page-overview">
+            <div class="page-header">
+                <h1>Overview</h1>
+                <p>Aggregate performance across all test cases</p>
+            </div>
+
+            <div class="card" id="algo-summary-card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Algorithm Performance Summary</div>
+                        <div class="card-subtitle">Average across all test cases and phrases</div>
+                    </div>
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table" id="algo-summary-table">
+                        <thead>
+                            <tr>
+                                <th>Algorithm</th>
+                                <th>Avg Precision</th>
+                                <th>Avg Recall</th>
+                                <th>Avg F1</th>
+                                <th>Avg Latency</th>
+                                <th>Total TP</th>
+                                <th>Total FP</th>
+                                <th>Total FN</th>
+                                <th>Phrases</th>
+                            </tr>
+                        </thead>
+                        <tbody id="algo-summary-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">F1 Score by Test Case</div>
+                            <div class="card-subtitle">Mean F1 per category</div>
+                        </div>
+                    </div>
+                    <div class="legend-row">
+                        <div class="legend-item"><span class="legend-swatch" style="background: var(--accent-1);"></span> GLiNER</div>
+                        <div class="legend-item"><span class="legend-swatch" style="background: var(--accent-2);"></span> spaCy</div>
+                    </div>
+                    <div class="chart-wrap"><canvas id="chart-f1-by-case"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Precision vs Recall</div>
+                            <div class="card-subtitle">Trade-off comparison (per test case mean)</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap"><canvas id="chart-pr-scatter"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Latency Distribution</div>
+                            <div class="card-subtitle">Average latency in seconds per test case</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap"><canvas id="chart-latency"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Overall Metrics</div>
+                            <div class="card-subtitle">Mean Precision, Recall, F1 across all phrases</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap"><canvas id="chart-overall-radar"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ HEATMAP ============ -->
+        <div class="page-section" id="page-heatmap">
+            <div class="page-header">
+                <h1>Performance Heatmap</h1>
+                <p>Quick comparison of mean F1 scores across all dimensions</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">F1 Heatmap</div>
+                        <div class="card-subtitle">Darker = higher F1</div>
+                    </div>
+                </div>
+                <div id="heatmap-container"></div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 20px;">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Precision Heatmap</div>
+                        </div>
+                    </div>
+                    <div id="heatmap-precision"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Recall Heatmap</div>
+                        </div>
+                    </div>
+                    <div id="heatmap-recall"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TEST CASES ============ -->
+        <div class="page-section" id="page-testcases">
+            <div class="page-header">
+                <h1>Test Case Breakdown</h1>
+                <p>Detailed per-test-case analysis</p>
+            </div>
+            <div class="pill-row" id="tc-pills"></div>
+            <div id="tc-content"></div>
+        </div>
+
+        <!-- ============ DETAILS ============ -->
+        <div class="page-section" id="page-details">
+            <div class="page-header">
+                <h1>Phrase-Level Details</h1>
+                <p>Every evaluated phrase with full metrics</p>
+            </div>
+
+            <div class="pill-row" id="detail-algo-pills"></div>
+            <div class="pill-row" id="detail-tc-pills"></div>
+
+            <div class="card">
+                <div class="table-scroll">
+                    <table class="data-table" id="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Algorithm</th>
+                                <th>Test Case</th>
+                                <th>Phrase ID</th>
+                                <th>Precision</th>
+                                <th>Recall</th>
+                                <th>F1</th>
+                                <th>TP</th>
+                                <th>FP</th>
+                                <th>FN</th>
+                                <th>Latency (s)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ======================== DATA ========================
+const RAW_JSON = `{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_1","Phrase":"On Rembrandtplein, at number 19, this mid-sized property offers 40 rooms above a row of caf\u00e9s and bars; Rembrandtplein Hotel is often mistaken for the square itself in ride-hailing apps.","TP":1,"FP":2,"FN":1,"Precision":0.3333,"Recall":0.5,"F1":0.4,"Latency":2.1605}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_2","Phrase":"Just off Oxford Circus, guests check in at a narrow fa\u00e7ade on Oxford Street, although Oxford Street Hotel officially lists its entrance on Ramillies Place.","TP":3,"FP":2,"FN":1,"Precision":0.6,"Recall":0.75,"F1":0.6667,"Latency":1.7921}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_3","Phrase":"The building at 221B Baker Street operates as a small hotel today, with Baker Street Rooms using the famous address despite being unrelated to the literary landmark.","TP":1,"FP":2,"FN":1,"Precision":0.3333,"Recall":0.5,"F1":0.4,"Latency":1.7779}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_4","Phrase":"Facing Dam Square and the Royal Palace, rooms here are marketed under the name Dam Square Hotel, even though the registered address is Damrak 7.","TP":3,"FP":1,"FN":1,"Precision":0.75,"Recall":0.75,"F1":0.75,"Latency":1.9908}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_5","Phrase":"Although its windows overlook Museumplein, the property is entered via Honthorststraat; Museumplein Residence uses the square name primarily for branding.","TP":3,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":2.416}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_6","Phrase":"Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.","TP":1,"FP":2,"FN":2,"Precision":0.3333,"Recall":0.3333,"F1":0.3333,"Latency":1.6605}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_7","Phrase":"Near the Colosseum metro stop, check-in takes place on Via dei Fori Imperiali, while the accommodation itself is branded as Colosseum Metro Hotel.","TP":2,"FP":1,"FN":1,"Precision":0.6667,"Recall":0.6667,"F1":0.6667,"Latency":1.8295}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_8","Phrase":"Marketed as Eiffel Tower Avenue, the hotel is actually set back from the landmark, with its street address listed on Avenue de la Bourdonnais.","TP":1,"FP":3,"FN":2,"Precision":0.25,"Recall":0.3333,"F1":0.2857,"Latency":1.7966}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_9","Phrase":"Union Square appears prominently in the property name, yet Union Square Suites is located on Post Street, several blocks west of the plaza.","TP":3,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":1.6291}
+{"Algorithm":"GLiNER","Test_Case":"label_confusion","Phrase_ID":"label_confusion_10","Phrase":"Although commonly referred to as Times Square, the hotel's reception and mailing address are on West 46th Street, where Times Square Suites occupies the upper floors.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.8324}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_1","Phrase":"I have a reservation at the Rembrandt Square Hotel on Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":2.0745}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_2","Phrase":"I'm booked at Rembrandt Square Hotel, located in Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.8487}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_3","Phrase":"I have a confirmed booking at Rembrandt Square Hotel in Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5087}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_4","Phrase":"I'll be staying at the Rembrandt Square Hotel at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5379}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_5","Phrase":"I have accommodation booked at Rembrandt Square Hotel on Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.4907}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_6","Phrase":"I have a hotel booking at Rembrandt Square Hotel, Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5213}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_7","Phrase":"I'm staying at the Rembrandt Square Hotel in the Rembrandt Square area.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5165}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_8","Phrase":"I've made a reservation at Rembrandt Square Hotel at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5613}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_9","Phrase":"My booking is at the Rembrandt Square Hotel, right on Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":2.3745}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_10","Phrase":"I have a confirmed stay at Rembrandt Square Hotel on Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.523}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_11","Phrase":"I've booked a room at Rembrandt Square Hotel in Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.533}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_12","Phrase":"I have lodging reserved at Rembrandt Square Hotel, located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5052}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_13","Phrase":"I have a room booked at the Rembrandt Square Hotel at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5263}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_14","Phrase":"I'm checked in at Rembrandt Square Hotel in Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5399}
+{"Algorithm":"GLiNER","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_15","Phrase":"I have a hotel reservation for Rembrandt Square Hotel at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.5262}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_1","Phrase":"The Rembrandt Square Hotel located at Rembrandt Square offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":3,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":2.1388}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_2","Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":2,"FN":1,"Precision":0.3333,"Recall":0.5,"F1":0.4,"Latency":2.0499}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_3","Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel is located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.7482}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_4","Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.7543}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_5","Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.7904}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_6","Phrase":"The Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers and is located at Rembrandt Square.","TP":1,"FP":2,"FN":1,"Precision":0.3333,"Recall":0.5,"F1":0.4,"Latency":1.7638}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_7","Phrase":"At Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":2,"FN":1,"Precision":0.3333,"Recall":0.5,"F1":0.4,"Latency":1.64}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_8","Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":2.5064}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_9","Phrase":"The Rembrandt Square Hotel, offering comfortable accommodation in the heart of the city for leisure and business travelers, is located at Rembrandt Square.","TP":1,"FP":2,"FN":1,"Precision":0.3333,"Recall":0.5,"F1":0.4,"Latency":1.8407}
+{"Algorithm":"GLiNER","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_10","Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.6909}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_1","Phrase":"The Hotel Six located at 4 Oak St offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":1.6319}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_2","Phrase":"The Grand Harbor Hotel located at 221B Baker Street offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":3,"FN":1,"Precision":0.25,"Recall":0.5,"F1":0.3333,"Latency":1.6342}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_3","Phrase":"The The Royal Crescent Boutique & Spa Hotel located at 18-24 Royal Crescent, Bath BA1 2LS offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":1.8776}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_4","Phrase":"The M Hotel located at 9 Rue du Bac offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":1.7329}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_5","Phrase":"The The St. Augustine Waterfront Conference Hotel & Suites located at 500 Avenida Menendez, St. Augustine, FL 32084 offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":3,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":2.7541}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_6","Phrase":"The Noor located at 1 Al Noor Rd offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":3,"FN":1,"Precision":0.25,"Recall":0.5,"F1":0.3333,"Latency":1.6471}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_7","Phrase":"The Hotel de l'Op\u00e9ra located at 2 Place de l'Op\u00e9ra offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":1.817}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_8","Phrase":"The The International Travelers' Rest Hotel, Residences, and Extended Stay located at 7777 West Great Northern Boulevard, Building C, Suite 120 offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":5,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":1.9937}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_9","Phrase":"The Ivy located at 10 Downing St offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":3,"FN":1,"Precision":0.25,"Recall":0.5,"F1":0.3333,"Latency":1.6185}
+{"Algorithm":"GLiNER","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_10","Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":4,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":1.8559}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_01_canonical","Phrase":"The Riverside Hotel is located at 128 Market Street, near the central railway station.","TP":1,"FP":3,"FN":1,"Precision":0.25,"Recall":0.5,"F1":0.3333,"Latency":2.2357}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_01_case_variant","Phrase":"the riverside hotel is located at 128 market street, near the central railway station.","TP":1,"FP":3,"FN":1,"Precision":0.25,"Recall":0.5,"F1":0.3333,"Latency":1.7181}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_02_canonical","Phrase":"Guests can find the Grand Palace Hotel on King Street at Number 77, opposite the courthouse.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.5526}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_02_case_variant","Phrase":"guests can find the grand palace hotel on king street at number 77, opposite the courthouse.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.5469}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_03_canonical","Phrase":"The Sunrise Boutique Hotel is situated on Ocean Drive at No. 502, facing the waterfront.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.5501}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_03_case_variant","Phrase":"the sunrise boutique hotel is situated on ocean drive at no. 502, facing the waterfront.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.5359}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_04_canonical","Phrase":"The Linden Tree Hotel is located at 310 Elm Road, close to the university campus.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":1.5477}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_04_case_variant","Phrase":"the linden tree hotel is located at 310 elm road, close to the university campus.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":1.8235}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_05_canonical","Phrase":"Visitors will find the Heritage Hotel at 221B Baker Street, next to the historic museum.","TP":1,"FP":3,"FN":1,"Precision":0.25,"Recall":0.5,"F1":0.3333,"Latency":2.1333}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_05_case_variant","Phrase":"visitors will find the heritage hotel at 221b baker street, next to the historic museum.","TP":1,"FP":3,"FN":1,"Precision":0.25,"Recall":0.5,"F1":0.3333,"Latency":1.5534}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_06_canonical","Phrase":"The City View Hotel stands on Queen's Road at Number 89, beside the convention center.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.544}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_06_case_variant","Phrase":"the city view hotel stands on queen's road at number 89, beside the convention center.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.5495}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_07_canonical","Phrase":"The Urban Stay Hotel is located on Avenida Paulista at 1578, close to the metro station.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.6067}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_07_case_variant","Phrase":"the urban stay hotel is located on avenida paulista at 1578, close to the metro station.","TP":3,"FP":1,"FN":0,"Precision":0.75,"Recall":1.0,"F1":0.8571,"Latency":1.5936}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_08_canonical","Phrase":"The Seaside Hotel is positioned at 1400 Ocean Drive, directly facing the beach.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":1.5175}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_08_case_variant","Phrase":"the seaside hotel is positioned at 1400 ocean drive, directly facing the beach.","TP":2,"FP":2,"FN":0,"Precision":0.5,"Recall":1.0,"F1":0.6667,"Latency":2.3631}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_09_canonical","Phrase":"The Mountain Lodge Hotel is found on Alpine Way at No. 64, near the ski lift.","TP":2,"FP":2,"FN":1,"Precision":0.5,"Recall":0.6667,"F1":0.5714,"Latency":1.5937}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_09_case_variant","Phrase":"the mountain lodge hotel is found on alpine way at no. 64, near the ski lift.","TP":2,"FP":2,"FN":1,"Precision":0.5,"Recall":0.6667,"F1":0.5714,"Latency":1.5485}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_10_canonical","Phrase":"The Royal Heights Hotel operates from 45 Victoria Street, across from Central Park.","TP":1,"FP":3,"FN":2,"Precision":0.25,"Recall":0.3333,"F1":0.2857,"Latency":1.4919}
+{"Algorithm":"GLiNER","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_10_case_variant","Phrase":"the royal heights hotel operates from 45 victoria street, across from central park.","TP":1,"FP":3,"FN":2,"Precision":0.25,"Recall":0.3333,"F1":0.2857,"Latency":1.487}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_1","Phrase":"The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.","TP":1,"FP":3,"FN":2,"Precision":0.25,"Recall":0.3333,"F1":0.2857,"Latency":2.0037}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_2","Phrase":"Stay at the Marrioot Marquis in downtown Chciago, situatd at 456 Michgan Avene. The Marrioot is known for its premuim service and conveinent loction near the river.","TP":4,"FP":1,"FN":0,"Precision":0.8,"Recall":1.0,"F1":0.8889,"Latency":1.9939}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_3","Phrase":"The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.","TP":1,"FP":3,"FN":2,"Precision":0.25,"Recall":0.3333,"F1":0.2857,"Latency":2.7794}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_4","Phrase":"Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.","TP":1,"FP":2,"FN":2,"Precision":0.3333,"Recall":0.3333,"F1":0.3333,"Latency":2.018}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_5","Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","TP":1,"FP":1,"FN":2,"Precision":0.5,"Recall":0.3333,"F1":0.4,"Latency":1.9826}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_6","Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","TP":0,"FP":4,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":1.9148}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_7","Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","TP":2,"FP":2,"FN":2,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":1.9674}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_8","Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","TP":0,"FP":4,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":2.059}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_9","Phrase":"The DoubleTree by Hliton Amsterdm Centrl Sttion can be found at Oosterdoksstrat 4. This DoubleTee hotel is known for its warm cookie welcomme and modern facilties.","TP":0,"FP":3,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":2.6604}
+{"Algorithm":"GLiNER","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_10","Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","TP":3,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":1.9222}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_1","Phrase":"On Rembrandtplein, at number 19, this mid-sized property offers 40 rooms above a row of caf\u00e9s and bars; Rembrandtplein Hotel is often mistaken for the square itself in ride-hailing apps.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.2056}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_2","Phrase":"Just off Oxford Circus, guests check in at a narrow fa\u00e7ade on Oxford Street, although Oxford Street Hotel officially lists its entrance on Ramillies Place.","TP":2,"FP":2,"FN":2,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1491}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_3","Phrase":"The building at 221B Baker Street operates as a small hotel today, with Baker Street Rooms using the famous address despite being unrelated to the literary landmark.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1486}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_4","Phrase":"Facing Dam Square and the Royal Palace, rooms here are marketed under the name Dam Square Hotel, even though the registered address is Damrak 7.","TP":2,"FP":2,"FN":2,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1593}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_5","Phrase":"Although its windows overlook Museumplein, the property is entered via Honthorststraat; Museumplein Residence uses the square name primarily for branding.","TP":1,"FP":2,"FN":2,"Precision":0.3333,"Recall":0.3333,"F1":0.3333,"Latency":0.1534}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_6","Phrase":"Travelers often assume Grand Canal refers to the waterway, but Grand Canal Hotel occupies a converted palazzo on Fondamenta San Simeon Piccolo.","TP":2,"FP":1,"FN":1,"Precision":0.6667,"Recall":0.6667,"F1":0.6667,"Latency":0.1547}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_7","Phrase":"Near the Colosseum metro stop, check-in takes place on Via dei Fori Imperiali, while the accommodation itself is branded as Colosseum Metro Hotel.","TP":2,"FP":1,"FN":1,"Precision":0.6667,"Recall":0.6667,"F1":0.6667,"Latency":0.1628}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_8","Phrase":"Marketed as Eiffel Tower Avenue, the hotel is actually set back from the landmark, with its street address listed on Avenue de la Bourdonnais.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1498}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_9","Phrase":"Union Square appears prominently in the property name, yet Union Square Suites is located on Post Street, several blocks west of the plaza.","TP":2,"FP":1,"FN":1,"Precision":0.6667,"Recall":0.6667,"F1":0.6667,"Latency":0.1344}
+{"Algorithm":"spaCy","Test_Case":"label_confusion","Phrase_ID":"label_confusion_10","Phrase":"Although commonly referred to as Times Square, the hotel's reception and mailing address are on West 46th Street, where Times Square Suites occupies the upper floors.","TP":2,"FP":1,"FN":1,"Precision":0.6667,"Recall":0.6667,"F1":0.6667,"Latency":0.149}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_1","Phrase":"I have a reservation at the Rembrandt Square Hotel on Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1233}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_2","Phrase":"I'm booked at Rembrandt Square Hotel, located in Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1126}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_3","Phrase":"I have a confirmed booking at Rembrandt Square Hotel in Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1107}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_4","Phrase":"I'll be staying at the Rembrandt Square Hotel at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1105}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_5","Phrase":"I have accommodation booked at Rembrandt Square Hotel on Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1072}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_6","Phrase":"I have a hotel booking at Rembrandt Square Hotel, Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1263}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_7","Phrase":"I'm staying at the Rembrandt Square Hotel in the Rembrandt Square area.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1769}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_8","Phrase":"I've made a reservation at Rembrandt Square Hotel at Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1632}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_9","Phrase":"My booking is at the Rembrandt Square Hotel, right on Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1921}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_10","Phrase":"I have a confirmed stay at Rembrandt Square Hotel on Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1763}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_11","Phrase":"I've booked a room at Rembrandt Square Hotel in Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1653}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_12","Phrase":"I have lodging reserved at Rembrandt Square Hotel, located at Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1678}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_13","Phrase":"I have a room booked at the Rembrandt Square Hotel at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1675}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_14","Phrase":"I'm checked in at Rembrandt Square Hotel in Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1538}
+{"Algorithm":"spaCy","Test_Case":"rephrasing_sensitivity","Phrase_ID":"rephrasing_sensitivity_15","Phrase":"I have a hotel reservation for Rembrandt Square Hotel at Rembrandt Square.","TP":2,"FP":0,"FN":0,"Precision":1.0,"Recall":1.0,"F1":1.0,"Latency":0.1684}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_1","Phrase":"The Rembrandt Square Hotel located at Rembrandt Square offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.2175}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_2","Phrase":"Located at Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.2201}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_3","Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel is located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.2294}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_4","Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered by the Rembrandt Square Hotel located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1609}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_5","Phrase":"For leisure and business travelers, comfortable accommodation in the heart of the city is offered by the Rembrandt Square Hotel located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1454}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_6","Phrase":"The Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers and is located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1453}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_7","Phrase":"At Rembrandt Square, the Rembrandt Square Hotel offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1465}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_8","Phrase":"Comfortable accommodation in the heart of the city for leisure and business travelers is offered at Rembrandt Square by the Rembrandt Square Hotel.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1429}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_9","Phrase":"The Rembrandt Square Hotel, offering comfortable accommodation in the heart of the city for leisure and business travelers, is located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1442}
+{"Algorithm":"spaCy","Test_Case":"placement_sensitivity","Phrase_ID":"placement_sensitivity_10","Phrase":"Offering comfortable accommodation in the heart of the city for leisure and business travelers, the Rembrandt Square Hotel located at Rembrandt Square.","TP":1,"FP":1,"FN":1,"Precision":0.5,"Recall":0.5,"F1":0.5,"Latency":0.1408}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_1","Phrase":"The Hotel Six located at 4 Oak St offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1233}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_2","Phrase":"The Grand Harbor Hotel located at 221B Baker Street offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":2,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1308}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_3","Phrase":"The The Royal Crescent Boutique & Spa Hotel located at 18-24 Royal Crescent, Bath BA1 2LS offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":3,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1678}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_4","Phrase":"The M Hotel located at 9 Rue du Bac offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1451}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_5","Phrase":"The The St. Augustine Waterfront Conference Hotel & Suites located at 500 Avenida Menendez, St. Augustine, FL 32084 offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":3,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.18}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_6","Phrase":"The Noor located at 1 Al Noor Rd offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1277}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_7","Phrase":"The Hotel de l'Op\u00e9ra located at 2 Place de l'Op\u00e9ra offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1483}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_8","Phrase":"The The International Travelers' Rest Hotel, Residences, and Extended Stay located at 7777 West Great Northern Boulevard, Building C, Suite 120 offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":2,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1812}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_9","Phrase":"The Ivy located at 10 Downing St offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1262}
+{"Algorithm":"spaCy","Test_Case":"variable_entity_length","Phrase_ID":"variable_entity_length_10","Phrase":"The The Fjordview Mountain Lodge & Northern Lights Retreat located at Kilometer 12, Scenic Route 9, Longyear Valley offers comfortable accommodation in the heart of the city for leisure and business travelers.","TP":0,"FP":4,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1909}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_01_canonical","Phrase":"The Riverside Hotel is located at 128 Market Street, near the central railway station.","TP":1,"FP":0,"FN":1,"Precision":1.0,"Recall":0.5,"F1":0.6667,"Latency":0.1129}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_01_case_variant","Phrase":"the riverside hotel is located at 128 market street, near the central railway station.","TP":0,"FP":0,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.112}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_02_canonical","Phrase":"Guests can find the Grand Palace Hotel on King Street at Number 77, opposite the courthouse.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1143}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_02_case_variant","Phrase":"guests can find the grand palace hotel on king street at number 77, opposite the courthouse.","TP":0,"FP":1,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1131}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_03_canonical","Phrase":"The Sunrise Boutique Hotel is situated on Ocean Drive at No. 502, facing the waterfront.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1136}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_03_case_variant","Phrase":"the sunrise boutique hotel is situated on ocean drive at no. 502, facing the waterfront.","TP":0,"FP":1,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1136}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_04_canonical","Phrase":"The Linden Tree Hotel is located at 310 Elm Road, close to the university campus.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1148}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_04_case_variant","Phrase":"the linden tree hotel is located at 310 elm road, close to the university campus.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1166}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_05_canonical","Phrase":"Visitors will find the Heritage Hotel at 221B Baker Street, next to the historic museum.","TP":0,"FP":1,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1172}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_05_case_variant","Phrase":"visitors will find the heritage hotel at 221b baker street, next to the historic museum.","TP":0,"FP":0,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1211}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_06_canonical","Phrase":"The City View Hotel stands on Queen's Road at Number 89, beside the convention center.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.112}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_06_case_variant","Phrase":"the city view hotel stands on queen's road at number 89, beside the convention center.","TP":0,"FP":1,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1115}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_07_canonical","Phrase":"The Urban Stay Hotel is located on Avenida Paulista at 1578, close to the metro station.","TP":0,"FP":3,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1179}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_07_case_variant","Phrase":"the urban stay hotel is located on avenida paulista at 1578, close to the metro station.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1209}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_08_canonical","Phrase":"The Seaside Hotel is positioned at 1400 Ocean Drive, directly facing the beach.","TP":0,"FP":2,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1038}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_08_case_variant","Phrase":"the seaside hotel is positioned at 1400 ocean drive, directly facing the beach.","TP":0,"FP":0,"FN":2,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1039}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_09_canonical","Phrase":"The Mountain Lodge Hotel is found on Alpine Way at No. 64, near the ski lift.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1122}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_09_case_variant","Phrase":"the mountain lodge hotel is found on alpine way at no. 64, near the ski lift.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1135}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_10_canonical","Phrase":"The Royal Heights Hotel operates from 45 Victoria Street, across from Central Park.","TP":1,"FP":1,"FN":2,"Precision":0.5,"Recall":0.3333,"F1":0.4,"Latency":0.1161}
+{"Algorithm":"spaCy","Test_Case":"case_sensitivity_errors","Phrase_ID":"case_sensitivity_errors_10_case_variant","Phrase":"the royal heights hotel operates from 45 victoria street, across from central park.","TP":1,"FP":1,"FN":2,"Precision":0.5,"Recall":0.3333,"F1":0.4,"Latency":0.1035}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_1","Phrase":"The Grand Hiltno is a luxury hotel located at 123 Brodway Avnue, New Yrok. This Hiltno proprty offers spacious roms, a fintess cneter, and easy acess to major atrractions.","TP":1,"FP":2,"FN":2,"Precision":0.3333,"Recall":0.3333,"F1":0.3333,"Latency":0.2223}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_2","Phrase":"Stay at the Marrioot Marquis in downtown Chciago, situatd at 456 Michgan Avene. The Marrioot is known for its premuim service and conveinent loction near the river.","TP":1,"FP":2,"FN":3,"Precision":0.3333,"Recall":0.25,"F1":0.2857,"Latency":0.1824}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_3","Phrase":"The Hyatt Regncy San Frnacisco can be found at 789 Embarcdero Rd. This Hyat hotel feautres bay vews, modern metting spaces, and renownd dinning optons.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1957}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_4","Phrase":"Enjoy a comfrtable stay at the Sheratonn Times Sqaure Hotel, located at 811 7th Avnue, New Yrok City. The Sheratonn offers recently renovted roms and a larg indoor pool.","TP":0,"FP":4,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1994}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_5","Phrase":"The Intercontinetal Londn Park Lane is a prestigous hotel at 1 Park Ln, Londn. This Interconinental propety is famos for its elegent suites and execuative lounge.","TP":0,"FP":2,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.2064}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_6","Phrase":"Book your visit at the Ritz-Carlonn Los Angles, locaed at 900 W Olympc Blvd. The Ritz-Carlon offers luxury aminities and panoramic city veiwes.","TP":0,"FP":4,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1806}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_7","Phrase":"The Westin St. Fransis San Frnacisco is located at 335 Powel Stret. This Westn hotel provides the Heavenl Bed experince and close proxmity to Union Sqaure.","TP":1,"FP":3,"FN":3,"Precision":0.25,"Recall":0.25,"F1":0.25,"Latency":0.1793}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_8","Phrase":"Experience confort at the Holidy Inn Exprss Boston, situatd at 69 Bexer Stret. This Holidy Inn Exprss includes complmentary brakfast and frre WiFi.","TP":0,"FP":3,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1815}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_9","Phrase":"The DoubleTree by Hliton Amsterdm Centrl Sttion can be found at Oosterdoksstrat 4. This DoubleTee hotel is known for its warm cookie welcomme and modern facilties.","TP":0,"FP":4,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.186}
+{"Algorithm":"spaCy","Test_Case":"spelling_errors","Phrase_ID":"spelling_errors_10","Phrase":"Stay at the Radisson Blu Berln Alexnderplatz, located at Karl-Libknecht-Strse 3. The Radisson Bllu hotel offers stylish roms and a rooftop welness area.","TP":0,"FP":3,"FN":3,"Precision":0.0,"Recall":0.0,"F1":0.0,"Latency":0.1972}`;
+
+let DATA;
+try {
+    DATA = RAW_JSON.trim().split('\n').map(line => JSON.parse(line));
+} catch(e) {
+    // Fallback: fetch from file
+    DATA = [];
+}
+
+const ALGORITHMS = [...new Set(DATA.map(d => d.Algorithm))].sort();
+const TEST_CASES = [...new Set(DATA.map(d => d.Test_Case))].sort();
+const COLORS = {
+    'GLiNER': { main: '#6366f1', light: '#eef2ff', rgb: '99,102,241' },
+    'spaCy':  { main: '#f59e0b', light: '#fffbeb', rgb: '245,158,11' }
+};
+
+// ======================== HELPERS ========================
+function mean(arr) { return arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : 0; }
+
+function getByAlgoCase(algo, tc) {
+    return DATA.filter(d => d.Algorithm === algo && d.Test_Case === tc);
+}
+
+function meanMetric(algo, tc, metric) {
+    const rows = tc ? getByAlgoCase(algo, tc) : DATA.filter(d => d.Algorithm === algo);
+    return mean(rows.map(d => d[metric]));
+}
+
+function formatTestCase(tc) {
+    return tc.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function heatColor(val, hue) {
+    const alpha = Math.max(0.08, val);
+    if (hue === 'indigo') return `rgba(99,102,241,${alpha})`;
+    if (hue === 'amber') return `rgba(245,158,11,${alpha})`;
+    return `rgba(16,185,129,${alpha})`;
+}
+
+// ======================== SIDEBAR ========================
+const sidebarList = document.getElementById('sidebar-test-list');
+TEST_CASES.forEach(tc => {
+    const count = DATA.filter(d => d.Test_Case === tc).length / ALGORITHMS.length;
+    sidebarList.innerHTML += `<div style="padding: 2px 8px;">${formatTestCase(tc)} <span style="color:#45475a;">(${count})</span></div>`;
+});
+
+// ======================== NAVIGATION ========================
+document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item[data-page]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+        document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    });
+});
+
+// ======================== KPI CARDS ========================
+function renderSummaryTable() {
+    const tbody = document.getElementById('algo-summary-tbody');
+
+    // Compute per-algorithm stats
+    const stats = ALGORITHMS.map(algo => {
+        const rows = DATA.filter(d => d.Algorithm === algo);
+        return {
+            algo,
+            precision: mean(rows.map(d => d.Precision)),
+            recall: mean(rows.map(d => d.Recall)),
+            f1: mean(rows.map(d => d.F1)),
+            latency: mean(rows.map(d => d.Latency)),
+            tp: rows.reduce((s, d) => s + d.TP, 0),
+            fp: rows.reduce((s, d) => s + d.FP, 0),
+            fn: rows.reduce((s, d) => s + d.FN, 0),
+            count: rows.length,
+        };
+    });
+
+    // Find best values for highlighting
+    const bestF1 = Math.max(...stats.map(s => s.f1));
+    const bestP = Math.max(...stats.map(s => s.precision));
+    const bestR = Math.max(...stats.map(s => s.recall));
+    const bestLat = Math.min(...stats.map(s => s.latency));
+
+    tbody.innerHTML = stats.map(s => {
+        const highlight = v => v ? 'font-weight:700; color:#10b981;' : '';
+        return `<tr>
+            <td><span class="algo-dot ${s.algo === 'GLiNER' ? 'dot-gliner' : 'dot-spacy'}"></span><strong>${s.algo}</strong></td>
+            <td style="${highlight(s.precision === bestP)}">${(s.precision * 100).toFixed(1)}%</td>
+            <td style="${highlight(s.recall === bestR)}">${(s.recall * 100).toFixed(1)}%</td>
+            <td style="${highlight(s.f1 === bestF1)}">${(s.f1 * 100).toFixed(1)}%</td>
+            <td style="${highlight(s.latency === bestLat)}">${s.latency.toFixed(3)}s</td>
+            <td>${s.tp}</td>
+            <td>${s.fp}</td>
+            <td>${s.fn}</td>
+            <td>${s.count}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ======================== OVERVIEW CHARTS ========================
+function renderOverviewCharts() {
+    // F1 by test case - grouped bar
+    const f1Data = {
+        labels: TEST_CASES.map(formatTestCase),
+        datasets: ALGORITHMS.map(algo => ({
+            label: algo,
+            data: TEST_CASES.map(tc => +(meanMetric(algo, tc, 'F1') * 100).toFixed(1)),
+            backgroundColor: COLORS[algo].main,
+            borderRadius: 4,
+            maxBarThickness: 32,
+        }))
+    };
+    new Chart(document.getElementById('chart-f1-by-case'), {
+        type: 'bar',
+        data: f1Data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1.5,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f3f4f6' } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 35 } }
+            }
+        }
+    });
+
+    // Precision vs Recall scatter
+    const scatterDatasets = ALGORITHMS.map(algo => ({
+        label: algo,
+        data: TEST_CASES.map(tc => ({
+            x: +(meanMetric(algo, tc, 'Precision') * 100).toFixed(1),
+            y: +(meanMetric(algo, tc, 'Recall') * 100).toFixed(1),
+            tc: formatTestCase(tc)
+        })),
+        backgroundColor: COLORS[algo].main,
+        pointRadius: 7,
+        pointHoverRadius: 9,
+    }));
+    new Chart(document.getElementById('chart-pr-scatter'), {
+        type: 'scatter',
+        data: { datasets: scatterDatasets },
+        options: {
+            responsive: true,
+            aspectRatio: 1.5,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label} - ${ctx.raw.tc}: P=${ctx.raw.x}%, R=${ctx.raw.y}%` } }
+            },
+            scales: {
+                x: { title: { display: true, text: 'Precision %' }, min: 0, max: 100, grid: { color: '#f3f4f6' } },
+                y: { title: { display: true, text: 'Recall %' }, min: 0, max: 100, grid: { color: '#f3f4f6' } }
+            }
+        }
+    });
+
+    // Latency bar
+    new Chart(document.getElementById('chart-latency'), {
+        type: 'bar',
+        data: {
+            labels: TEST_CASES.map(formatTestCase),
+            datasets: ALGORITHMS.map(algo => ({
+                label: algo,
+                data: TEST_CASES.map(tc => +(meanMetric(algo, tc, 'Latency')).toFixed(3)),
+                backgroundColor: COLORS[algo].main,
+                borderRadius: 4,
+                maxBarThickness: 32,
+            }))
+        },
+        options: {
+            responsive: true,
+            aspectRatio: 1.5,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}s` } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: v => v + 's' }, grid: { color: '#f3f4f6' } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 35 } }
+            }
+        }
+    });
+
+    // Radar
+    new Chart(document.getElementById('chart-overall-radar'), {
+        type: 'radar',
+        data: {
+            labels: ['Precision', 'Recall', 'F1'],
+            datasets: ALGORITHMS.map(algo => ({
+                label: algo,
+                data: ['Precision', 'Recall', 'F1'].map(m => +(meanMetric(algo, null, m) * 100).toFixed(1)),
+                backgroundColor: `rgba(${COLORS[algo].rgb}, 0.15)`,
+                borderColor: COLORS[algo].main,
+                pointBackgroundColor: COLORS[algo].main,
+                borderWidth: 2,
+            }))
+        },
+        options: {
+            responsive: true,
+            aspectRatio: 1.5,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+            scales: { r: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', stepSize: 25 } } }
+        }
+    });
+}
+
+// ======================== HEATMAP ========================
+function renderHeatmap(containerId, metric, hue1, hue2) {
+    const container = document.getElementById(containerId);
+    let html = '<div class="heatmap-grid">';
+    html += '<div class="heatmap-header"></div>';
+    TEST_CASES.forEach(tc => {
+        html += `<div class="heatmap-header">${formatTestCase(tc).replace(/ /g, '<br>')}</div>`;
+    });
+
+    ALGORITHMS.forEach((algo, i) => {
+        const hue = i === 0 ? (hue1 || 'indigo') : (hue2 || 'amber');
+        html += `<div class="heatmap-row-label"><span class="algo-dot ${algo === 'GLiNER' ? 'dot-gliner' : 'dot-spacy'}"></span>${algo}</div>`;
+        TEST_CASES.forEach(tc => {
+            const val = meanMetric(algo, tc, metric);
+            html += `<div class="heatmap-cell" style="background: ${heatColor(val, hue)}; color: ${val > 0.5 ? '#fff' : 'var(--text-primary)'};">${(val * 100).toFixed(1)}%</div>`;
+        });
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ======================== TEST CASE DETAIL ========================
+function renderTestCasePage() {
+    const pillRow = document.getElementById('tc-pills');
+    const content = document.getElementById('tc-content');
+
+    TEST_CASES.forEach((tc, i) => {
+        const pill = document.createElement('button');
+        pill.className = 'pill' + (i === 0 ? ' active' : '');
+        pill.textContent = formatTestCase(tc);
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('#tc-pills .pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            showTestCase(tc);
+        });
+        pillRow.appendChild(pill);
+    });
+
+    function showTestCase(tc) {
+        const rows = DATA.filter(d => d.Test_Case === tc);
+        const phraseIds = [...new Set(rows.map(d => d.Phrase_ID))];
+
+        let html = `
+            <div class="grid-2" style="margin-bottom: 20px;">
+                <div class="card">
+                    <div class="card-title">F1 per Phrase</div>
+                    <canvas id="tc-f1-chart"></canvas>
+                </div>
+                <div class="card">
+                    <div class="card-title">Summary Statistics</div>
+                    <table class="data-table">
+                        <thead><tr><th>Algorithm</th><th>Avg Precision</th><th>Avg Recall</th><th>Avg F1</th><th>Avg Latency</th></tr></thead>
+                        <tbody>
+        `;
+        ALGORITHMS.forEach(algo => {
+            const r = rows.filter(d => d.Algorithm === algo);
+            html += `<tr>
+                <td><span class="algo-dot ${algo === 'GLiNER' ? 'dot-gliner' : 'dot-spacy'}"></span>${algo}</td>
+                <td>${(mean(r.map(d => d.Precision)) * 100).toFixed(1)}%</td>
+                <td>${(mean(r.map(d => d.Recall)) * 100).toFixed(1)}%</td>
+                <td><strong>${(mean(r.map(d => d.F1)) * 100).toFixed(1)}%</strong></td>
+                <td>${mean(r.map(d => d.Latency)).toFixed(3)}s</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+
+        // Per phrase table
+        html += `<div class="card"><div class="card-title">Phrase-Level Comparison</div><div class="table-scroll"><table class="data-table">
+            <thead><tr><th>Phrase ID</th>`;
+        ALGORITHMS.forEach(algo => {
+            html += `<th>${algo} F1</th><th>${algo} Lat.</th>`;
+        });
+        html += `<th>Winner</th></tr></thead><tbody>`;
+
+        phraseIds.forEach(pid => {
+            html += `<tr><td style="font-size:0.75rem;">${pid}</td>`;
+            const vals = {};
+            ALGORITHMS.forEach(algo => {
+                const d = rows.find(r => r.Algorithm === algo && r.Phrase_ID === pid);
+                vals[algo] = d ? d.F1 : 0;
+                html += `<td>${d ? (d.F1 * 100).toFixed(1) + '%' : '-'}</td>`;
+                html += `<td>${d ? d.Latency.toFixed(3) + 's' : '-'}</td>`;
+            });
+            const best = Object.entries(vals).sort((a,b) => b[1]-a[1])[0];
+            const tie = Object.values(vals).every(v => v === best[1]);
+            html += `<td>${tie ? 'Tie' : best[0]}</td></tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+
+        content.innerHTML = html;
+
+        // Render chart
+        setTimeout(() => {
+            const canvas = document.getElementById('tc-f1-chart');
+            if (!canvas) return;
+            const shortLabels = phraseIds.map((id, i) => '#' + (i + 1));
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: shortLabels,
+                    datasets: ALGORITHMS.map(algo => ({
+                        label: algo,
+                        data: phraseIds.map(pid => {
+                            const d = rows.find(r => r.Algorithm === algo && r.Phrase_ID === pid);
+                            return d ? +(d.F1 * 100).toFixed(1) : 0;
+                        }),
+                        backgroundColor: COLORS[algo].main,
+                        borderRadius: 3,
+                        maxBarThickness: 18,
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    aspectRatio: 2,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw}%` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }, 50);
+    }
+
+    showTestCase(TEST_CASES[0]);
+}
+
+// ======================== DETAILS TABLE ========================
+function renderDetailsPage() {
+    const algoRow = document.getElementById('detail-algo-pills');
+    const tcRow = document.getElementById('detail-tc-pills');
+    let filterAlgo = 'all';
+    let filterTC = 'all';
+
+    // Algo pills
+    ['all', ...ALGORITHMS].forEach(algo => {
+        const pill = document.createElement('button');
+        pill.className = 'pill' + (algo === 'all' ? ' active' : '');
+        pill.textContent = algo === 'all' ? 'All Algorithms' : algo;
+        pill.addEventListener('click', () => {
+            filterAlgo = algo;
+            document.querySelectorAll('#detail-algo-pills .pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            renderTable();
+        });
+        algoRow.appendChild(pill);
+    });
+
+    // TC pills
+    ['all', ...TEST_CASES].forEach(tc => {
+        const pill = document.createElement('button');
+        pill.className = 'pill' + (tc === 'all' ? ' active' : '');
+        pill.textContent = tc === 'all' ? 'All Test Cases' : formatTestCase(tc);
+        pill.addEventListener('click', () => {
+            filterTC = tc;
+            document.querySelectorAll('#detail-tc-pills .pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            renderTable();
+        });
+        tcRow.appendChild(pill);
+    });
+
+    function renderTable() {
+        const tbody = document.getElementById('detail-tbody');
+        let rows = DATA;
+        if (filterAlgo !== 'all') rows = rows.filter(d => d.Algorithm === filterAlgo);
+        if (filterTC !== 'all') rows = rows.filter(d => d.Test_Case === filterTC);
+
+        tbody.innerHTML = rows.map(d => {
+            const f1Color = d.F1 >= 0.8 ? '#10b981' : d.F1 >= 0.5 ? '#f59e0b' : '#ef4444';
+            return `<tr>
+                <td><span class="algo-dot ${d.Algorithm === 'GLiNER' ? 'dot-gliner' : 'dot-spacy'}"></span>${d.Algorithm}</td>
+                <td style="font-size:0.75rem;">${formatTestCase(d.Test_Case)}</td>
+                <td style="font-size:0.73rem; color: var(--text-muted);">${d.Phrase_ID}</td>
+                <td>${(d.Precision * 100).toFixed(1)}%</td>
+                <td>${(d.Recall * 100).toFixed(1)}%</td>
+                <td><strong style="color:${f1Color}">${(d.F1 * 100).toFixed(1)}%</strong></td>
+                <td>${d.TP}</td>
+                <td>${d.FP}</td>
+                <td>${d.FN}</td>
+                <td>${d.Latency.toFixed(3)}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    renderTable();
+}
+
+// ======================== INIT ========================
+renderSummaryTable();
+renderOverviewCharts();
+renderHeatmap('heatmap-container', 'F1', 'indigo', 'amber');
+renderHeatmap('heatmap-precision', 'Precision', 'indigo', 'amber');
+renderHeatmap('heatmap-recall', 'Recall', 'indigo', 'amber');
+renderTestCasePage();
+renderDetailsPage();
+</script>
+</body>
+</html>
