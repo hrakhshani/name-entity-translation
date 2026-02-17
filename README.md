@@ -1,6 +1,6 @@
 # Name Entity Translation
 
-![Dashboard](data/dashboard.png)
+![Dashboard](img/dashboard.png)
 
 A benchmarking pipeline for evaluating Named Entity Recognition (NER) models on travel and hospitality domain text. The project compares multiple NER approaches on their ability to extract location-related entities such as hotel names, addresses, street names, landmarks, and cities.
 
